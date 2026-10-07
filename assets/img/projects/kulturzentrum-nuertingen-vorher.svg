@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 400" width="600" height="400">
+<rect width="600" height="400" fill="#d6d5d1"/>
+<rect y="344" width="600" height="56" fill="#a8a49b"/>
+<rect x="114" y="174" width="372" height="170" fill="#b8b1a5"/>
+<rect x="108" y="164" width="384" height="12" fill="#5f5a52"/>
+<rect x="129" y="192" width="32" height="40" fill="#7b8086"/>
+<rect x="129" y="192" width="32" height="40" fill="none" stroke="#5f5a52" stroke-width="3"/>
+<rect x="191" y="192" width="32" height="40" fill="#7b8086"/>
+<rect x="191" y="192" width="32" height="40" fill="none" stroke="#5f5a52" stroke-width="3"/>
+<rect x="253" y="192" width="32" height="40" fill="#7b8086"/>
+<rect x="253" y="192" width="32" height="40" fill="none" stroke="#5f5a52" stroke-width="3"/>
+<rect x="315" y="192" width="32" height="40" fill="#7b8086"/>
+<rect x="315" y="192" width="32" height="40" fill="none" stroke="#5f5a52" stroke-width="3"/>
+<rect x="377" y="192" width="32" height="40" fill="#7b8086"/>
+<rect x="377" y="192" width="32" height="40" fill="none" stroke="#5f5a52" stroke-width="3"/>
+<rect x="439" y="192" width="32" height="40" fill="#9b958a"/>
+<rect x="129" y="264" width="32" height="40" fill="#7b8086"/>
+<rect x="129" y="264" width="32" height="40" fill="none" stroke="#5f5a52" stroke-width="3"/>
+<rect x="191" y="264" width="32" height="40" fill="#7b8086"/>
+<rect x="191" y="264" width="32" height="40" fill="none" stroke="#5f5a52" stroke-width="3"/>
+<rect x="253" y="264" width="32" height="40" fill="#7b8086"/>
+<rect x="253" y="264" width="32" height="40" fill="none" stroke="#5f5a52" stroke-width="3"/>
+<rect x="377" y="264" width="32" height="40" fill="#7b8086"/>
+<rect x="377" y="264" width="32" height="40" fill="none" stroke="#5f5a52" stroke-width="3"/>
+<rect x="439" y="264" width="32" height="40" fill="#7b8086"/>
+<rect x="439" y="264" width="32" height="40" fill="none" stroke="#5f5a52" stroke-width="3"/>
+<rect x="315" y="288" width="32" height="56" fill="#5f5a52"/>
+<rect x="466" y="174" width="13" height="132" fill="#000" opacity="0.07"/>
+<rect x="261" y="174" width="5" height="60" fill="#000" opacity="0.07"/>
+<rect x="160" y="174" width="6" height="65" fill="#000" opacity="0.07"/>
+<rect x="424" y="174" width="5" height="84" fill="#000" opacity="0.07"/>
+<rect x="478" y="174" width="7" height="66" fill="#000" opacity="0.07"/>
+<polyline points="203,204 215,234 207,266 221,304" fill="none" stroke="#5f5a52" stroke-width="2"/>
+</svg>

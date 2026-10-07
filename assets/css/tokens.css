@@ -1,0 +1,103 @@
+/* SDTT design tokens — single source for colours, type, spacing.
+   Swap the heading font here (e.g. Söhne) once a licence is available. */
+
+@font-face {
+  font-family: "Public Sans";
+  src: url("../fonts/public-sans-latin-wght-normal.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Public Sans";
+  src: url("../fonts/public-sans-latin-wght-italic.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: "IBM Plex Mono";
+  src: url("../fonts/ibm-plex-mono-latin-400-normal.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "IBM Plex Mono";
+  src: url("../fonts/ibm-plex-mono-latin-500-normal.woff2") format("woff2");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  /* Brand */
+  --color-primary: #1a3d66;        /* government blue */
+  --color-primary-dark: #12304f;
+  --color-primary-tint: #e6edf5;
+  --color-secondary: #f0f0f2;      /* light grey surfaces */
+  --color-accent: #4a7c59;         /* CTA, completion — 4.8:1 on white */
+  --color-accent-dark: #3b6548;
+  --color-alert: #d97706;          /* icons / borders only (3.2:1) */
+  --color-alert-text: #9a4d04;     /* alert as text — 6.3:1 on white */
+
+  /* Neutrals */
+  --color-text: #2a2a2a;
+  --color-text-muted: #555555;
+  --color-border: #dddddd;
+  --color-border-strong: #b9bec7;
+  --color-surface: #ffffff;
+  --color-on-dark: #f0f0f2;
+  --color-on-dark-muted: #c3cedb;
+
+  /* Typography */
+  --font-heading: "Public Sans", "Helvetica Neue", Arial, sans-serif;
+  --font-body: "Public Sans", "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "IBM Plex Mono", Consolas, "Courier New", monospace;
+
+  --fs-h1: clamp(2.25rem, 1.6rem + 2.6vw, 3.5rem);   /* 36 → 56 */
+  --fs-h2: clamp(1.75rem, 1.45rem + 1.2vw, 2.5rem);  /* 28 → 40 */
+  --fs-h3: clamp(1.375rem, 1.25rem + 0.5vw, 1.75rem);/* 22 → 28 */
+  --fs-lead: clamp(1.125rem, 1.05rem + 0.35vw, 1.5rem);
+  --fs-body: 1.0625rem;  /* 17px */
+  --fs-small: 0.9375rem; /* 15px */
+  --fs-xs: 0.8125rem;    /* 13px */
+
+  --lh-tight: 1.15;
+  --lh-heading: 1.25;
+  --lh-body: 1.6;
+
+  /* Spacing (8px rhythm) */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-7: 3rem;
+  --space-8: 4rem;
+  --space-9: 5rem;
+  --section-y: clamp(3rem, 2rem + 4vw, 5rem);      /* 80px desktop per spec */
+  --gutter: clamp(1rem, 0.5rem + 2vw, 2rem);
+
+  /* Layout */
+  --container: 75rem; /* 1200px */
+  --container-narrow: 48rem;
+  --header-h: 4.5rem;
+
+  /* Shape & elevation */
+  --radius: 2px;
+  --shadow-hover: 0 2px 10px rgba(15, 18, 25, 0.08);
+  --focus-ring: 3px solid #1a3d66;
+  --focus-offset: 2px;
+
+  /* Motion */
+  --dur-fast: 150ms;
+  --dur-base: 300ms;
+  --ease-out: cubic-bezier(0.2, 0.6, 0.2, 1);
+
+  /* Layers */
+  --z-header: 100;
+  --z-dropdown: 110;
+  --z-skip: 1000;
+}

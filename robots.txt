@@ -1,0 +1,3 @@
+# Placeholder content – indexing disabled until go-live (site_data.INDEXABLE).
+User-agent: *
+Disallow: /
