@@ -1,6 +1,16 @@
 /* SDTT design tokens — single source for colours, type, spacing.
-   Swap the heading font here (e.g. Söhne) once a licence is available. */
+   Fonts follow the SDTT brand handbook (chapter 6):
+   Hanken Grotesk = headings and large numbers (600–800),
+   Public Sans = running text (400–600), IBM Plex Mono = data and labels (400–500).
+   All three: SIL Open Font License 1.1, self-hosted (see assets/fonts/licenses). */
 
+@font-face {
+  font-family: "Hanken Grotesk";
+  src: url("../fonts/hanken-grotesk-latin-wght-normal.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
 @font-face {
   font-family: "Public Sans";
   src: url("../fonts/public-sans-latin-wght-normal.woff2") format("woff2");
@@ -51,7 +61,7 @@
   --color-on-dark-muted: #c3cedb;
 
   /* Typography */
-  --font-heading: "Public Sans", "Helvetica Neue", Arial, sans-serif;
+  --font-heading: "Hanken Grotesk", "Public Sans", "Helvetica Neue", Arial, sans-serif;
   --font-body: "Public Sans", "Helvetica Neue", Arial, sans-serif;
   --font-mono: "IBM Plex Mono", Consolas, "Courier New", monospace;
 
@@ -81,7 +91,7 @@
   --gutter: clamp(1rem, 0.5rem + 2vw, 2rem);
 
   /* Layout */
-  --container: 75rem; /* 1200px */
+  --container: calc(75rem + 2 * var(--gutter)); /* content area is 1200px wide (side gutters on top) */
   --container-narrow: 48rem;
   --header-h: 4.5rem;
 

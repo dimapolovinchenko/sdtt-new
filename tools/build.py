@@ -9,7 +9,9 @@ edit content here or in site_data.py, never in the generated .html files.
 """
 
 import datetime
+import hashlib
 import posixpath
+from urllib.parse import quote
 import random
 import sys
 from html import escape
@@ -66,6 +68,19 @@ def write(path, text, binary=False):
     written.append(path)
 
 
+_versions = {}
+
+
+def version(path):
+    """Short content hash, appended to CSS/JS URLs so browsers never keep a stale copy."""
+    if path not in _versions:
+        try:
+            _versions[path] = hashlib.md5((ROOT / path).read_bytes()).hexdigest()[:8]
+        except FileNotFoundError:
+            _versions[path] = "0"
+    return _versions[path]
+
+
 class Ctx:
     def __init__(self, lang, pid):
         self.lang = lang
@@ -80,7 +95,10 @@ class Ctx:
         return rel(self.path, ROUTES[pid][lang or self.lang]) + query + frag
 
     def asset(self, target):
-        return rel(self.path, target)
+        url = rel(self.path, target)
+        if target.endswith((".css", ".js")):
+            url += "?v=" + version(target)
+        return url
 
     def doc(self, key):
         d = next(x for x in D.DOCS if x["key"] == key)
@@ -104,6 +122,11 @@ ICONS = {
     "menu": '<path d="M4 6h16"/><path d="M4 12h16"/><path d="M4 18h16"/>',
     "close": '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
     "alert": '<path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4"/><path d="M12 17h.01"/>',
+    "experience": '<path d="m12 3 9 5-9 5-9-5z"/><path d="m3 12 9 5 9-5"/><path d="m3 16 9 5 9-5"/>',
+    "standards": '<path d="M12 3 4 6v6c0 4.5 3.2 8 8 9 4.8-1 8-4.5 8-9V6z"/><path d="m9 12 2 2 4-4"/>',
+    "team": '<circle cx="9" cy="8" r="3"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><circle cx="17" cy="9" r="2.5"/><path d="M17 14.2c2.4.3 4 2.4 4 4.8"/>',
+    "schedule": '<rect x="3" y="5" width="18" height="16" rx="1"/><path d="M3 10h18M8 3v4M16 3v4"/><path d="m9 15 2 2 4-4"/>',
+    "transparency": '<path d="M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8z"/><path d="M14 3v5h5"/><path d="M9 13h6M9 17h6"/>',
     "education": '<path d="M22 10 12 5 2 10l10 5 10-5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/>',
     "health": '<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M12 8v8"/><path d="M8 12h8"/>',
     "landmark": '<path d="M3 22h18"/><path d="M6 18v-7"/><path d="M10 18v-7"/><path d="M14 18v-7"/><path d="M18 18v-7"/><path d="M12 2 20 7H4z"/>',
@@ -117,9 +140,18 @@ def icon(name, cls="icon"):
             f'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">{ICONS[name]}</svg>')
 
 
-LOGO = ('<svg class="brand-logo" width="44" height="44" viewBox="0 0 44 44" aria-hidden="true" focusable="false">'
-        '<rect width="44" height="44" fill="#1a3d66"/><rect x="9" y="11" width="26" height="4" fill="#fff"/>'
-        '<rect x="9" y="20" width="20" height="4" fill="#fff"/><rect x="9" y="29" width="26" height="4" fill="#4a7c59"/></svg>')
+def logo_header(c):
+    """Official SDTT logo (brand handbook ch. 4): main version with tagline from 640px up,
+    small version (no tagline) below. Files are used unchanged from the logo package."""
+    return (f'<img class="brand-logo brand-logo--main" src="{c.asset("assets/img/logo/SDTT_Logo_Haupt_Marineblau.svg")}" '
+            f'width="188" height="50" alt="SDTT – Generalunternehmer">'
+            f'<img class="brand-logo brand-logo--small" src="{c.asset("assets/img/logo/SDTT_Logo_Klein_Marineblau.svg")}" '
+            f'width="132" height="35" alt="SDTT – Generalunternehmer">')
+
+
+def logo_footer(c):
+    return (f'<img class="footer-logo" src="{c.asset("assets/img/logo/SDTT_Logo_Haupt_Weiss.svg")}" '
+            f'width="220" height="58" alt="SDTT – Generalunternehmer">')
 
 
 # ---------------------------------------------------------------- shared fragments
@@ -130,7 +162,7 @@ def tel(pair, cls=""):
 
 
 def mailto(addr):
-    return f'<a href="mailto:{addr}">{addr}</a>'
+    return f'<a href="mailto:{quote(addr, safe="@")}">{addr}</a>'
 
 
 def period(p):
@@ -164,11 +196,12 @@ def head(c, title, desc, extra_head=""):
 <meta property="og:url" content="{alt[c.lang]}">
 <meta property="og:locale" content="{c.t('de_DE', 'en_GB')}">
 <meta name="theme-color" content="#1a3d66">
-<link rel="icon" href="{c.asset('assets/img/favicon.svg')}" type="image/svg+xml">
+<link rel="icon" href="{c.asset('assets/img/logo/SDTT_Bildzeichen_Marineblau.svg')}" type="image/svg+xml">
+<link rel="preload" href="{c.asset('assets/fonts/hanken-grotesk-latin-wght-normal.woff2')}" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="{c.asset('assets/fonts/public-sans-latin-wght-normal.woff2')}" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="{c.asset('assets/css/tokens.css')}">
 <link rel="stylesheet" href="{c.asset('assets/css/main.css')}">
-<script>document.documentElement.className = "js";</script>
+<script>document.documentElement.className = "js"; setTimeout(function () {{ if (!window.__rv) document.documentElement.classList.add("rv-fail"); }}, 4000);</script>
 <script src="{c.asset('assets/js/main.js')}" defer></script>{extra_head}
 </head>"""
 
@@ -206,8 +239,7 @@ def header(c, section):
 <header class="site-header">
   <div class="container header-inner">
     <a class="brand" href="{c.url('home')}" aria-label="{c.t('SDTT – zur Startseite', 'SDTT – home page')}">
-      {LOGO}
-      <span class="brand-text"><span class="brand-name">SDTT</span><span class="brand-sub">{c.t("Generalunternehmer für öffentliche Bauprojekte", "General contractor for public construction")}</span></span>
+      {logo_header(c)}
     </a>
     <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav">
       {icon("menu", "icon icon-menu")}{icon("close", "icon icon-close")}<span>{c.t("Menü", "Menu")}</span>
@@ -248,7 +280,7 @@ def footer(c):
   <div class="container">
     <div class="footer-grid">
       <div>
-        <p class="footer-brand">SDTT GmbH</p>
+        <p class="footer-brand">{logo_footer(c)}</p>
         <p>{c.t("Generalunternehmer für öffentliche und kommunale Bauprojekte in Stuttgart und Baden-Württemberg.",
                 "General contractor for public and municipal construction projects in Stuttgart and Baden-Württemberg.")}</p>
         <p>{c.t("Qualitätsmanagement nach ISO 9001:2015. Ausführung nach VOB/B und DIN.",
@@ -298,7 +330,10 @@ def render(c, title, desc, body, section=None, scripts=(), jsonld=None):
     if jsonld:
         extra += f'\n<script type="application/ld+json">{jsonld}</script>'
     html = (head(c, title, desc, extra) + header(c, section or c.pid)
-            + f'\n<main id="main" tabindex="-1">\n{body}\n</main>' + footer(c) + "\n</body>\n</html>\n")
+            + f'\n<main id="main" tabindex="-1">\n{body}\n</main>' + footer(c)
+            + f'\n<script src="{c.asset("assets/js/lenis.min.js")}"></script>'
+            + f'\n<script src="{c.asset("assets/js/smooth-scroll.js")}"></script>'
+            + f'\n<script src="{c.asset("assets/js/reveal.js")}"></script>\n</body>\n</html>\n')
     # Never break a line between "§" and its number.
     write(c.path, html.replace("§ ", "§&nbsp;"))
 
@@ -323,16 +358,25 @@ def page_header(c, h1, lead=None, crumbs=(), eyebrow=None, extra=""):
 
 # ---------------------------------------------------------------- components
 def img_paths(p):
-    return f"assets/img/projects/{p['slug']}-vorher.svg", f"assets/img/projects/{p['slug']}-nachher.svg"
+    """Before / after pictures. Projects with real photos list them under "photos";
+    all others get generated placeholder drawings (.svg)."""
+    ext = p.get("photos", {}).get("ext", "svg")
+    return f"assets/img/projects/{p['slug']}-vorher.{ext}", f"assets/img/projects/{p['slug']}-nachher.{ext}"
+
+
+def img_size(p):
+    ph = p.get("photos")
+    return (ph["w"], ph["h"]) if ph else (600, 400)
 
 
 def ba_pair(c, p, eager=False):
     before, after = img_paths(p)
+    iw, ih = img_size(p)
     loading = "" if eager else ' loading="lazy"'
     title = p["title"][c.lang]
     return f"""<div class="ba-pair">
-  <figure><img src="{c.asset(before)}" width="600" height="400"{loading} decoding="async" alt="{esc(c.t(f'{title}: Zustand vor der Sanierung', f'{title}: condition before the works'))}"><figcaption>{c.t("Vorher", "Before")}</figcaption></figure>
-  <figure><img src="{c.asset(after)}" width="600" height="400"{loading} decoding="async" alt="{esc(c.t(f'{title}: Zustand nach Fertigstellung', f'{title}: condition after completion'))}"><figcaption>{c.t("Nachher", "After")}</figcaption></figure>
+  <figure><a class="zoom" href="{c.asset(before)}" data-lightbox aria-label="{esc(c.t('Vorher-Bild vergrößern', 'Enlarge before picture'))}"><img src="{c.asset(before)}" width="{iw}" height="{ih}"{loading} decoding="async" alt="{esc(c.t(f'{title}: Zustand vor der Sanierung', f'{title}: condition before the works'))}"></a><figcaption>{c.t("Vorher", "Before")}</figcaption></figure>
+  <figure><a class="zoom" href="{c.asset(after)}" data-lightbox aria-label="{esc(c.t('Nachher-Bild vergrößern', 'Enlarge after picture'))}"><img src="{c.asset(after)}" width="{iw}" height="{ih}"{loading} decoding="async" alt="{esc(c.t(f'{title}: Zustand nach Fertigstellung', f'{title}: condition after completion'))}"></a><figcaption>{c.t("Nachher", "After")}</figcaption></figure>
 </div>"""
 
 
@@ -346,7 +390,6 @@ def project_table(c, p):
     <tr><th scope="row">{c.t("Auftraggeber", "Client")}</th><td>{esc(p["client"][c.lang])}</td></tr>
     <tr><th scope="row">{c.t("Leistungsumfang", "Scope of works")}</th><td><ul class="bullet-list">{scope}</ul></td></tr>
     <tr><th scope="row">{c.t("Team", "Team")}</th><td>{esc(p["team"][c.lang])}</td></tr>
-    <tr><th scope="row">{c.t("Status", "Status")}</th><td><span class="status-ok">{icon("check-circle")}{c.t("Termingerecht und im Budgetrahmen abgeschlossen", "Completed on schedule and within budget")}</span></td></tr>
   </tbody>
 </table>"""
 
@@ -373,24 +416,54 @@ def ref_box(c, p):
     return f'<div class="ref-box"><!-- PLATZHALTER: Referenzkontakt -->{letter}{person}</div>'
 
 
+def ba_slider(c, p):
+    """Before/after comparison: drag the handle (or use the keyboard) to wipe between the two photos."""
+    before, after = img_paths(p)
+    iw, ih = img_size(p)
+    title = p["title"][c.lang]
+    alt_b = esc(c.t(f"{title}: Zustand vor der Sanierung", f"{title}: condition before the works"))
+    alt_a = esc(c.t(f"{title}: Zustand nach Fertigstellung", f"{title}: condition after completion"))
+    return f"""<div class="ba-slider" style="--pos:50%">
+  <img class="ba-img" src="{c.asset(before)}" width="{iw}" height="{ih}" loading="lazy" decoding="async" alt="{alt_b}">
+  <img class="ba-img ba-img--after" src="{c.asset(after)}" width="{iw}" height="{ih}" loading="lazy" decoding="async" alt="{alt_a}">
+  <span class="ba-label ba-label--before" aria-hidden="true">{c.t("Vorher", "Before")}</span>
+  <span class="ba-label ba-label--after" aria-hidden="true">{c.t("Nachher", "After")}</span>
+  <input class="ba-range" type="range" min="0" max="100" step="1" value="50" aria-label="{c.t('Vorher-Nachher-Vergleich: Regler verschieben', 'Before and after comparison: move the slider')}">
+  <span class="ba-handle" aria-hidden="true"><span class="ba-grip">{icon("arrow-left")}{icon("arrow-right")}</span></span>
+</div>"""
+
+
 def featured_project(c, p):
+    """Home page reference: comparison slider flush on the left half, facts on the right."""
+    facts = [
+        (c.t("Zeitraum", "Period"), f'<span class="mono">{period(p)}</span> · {esc(p["duration"][c.lang])}', False),
+        (c.t("Auftragsvolumen", "Contract value"), esc(p["budget"][c.lang]), False),
+        (c.t("Auftraggeber", "Client"), esc(p["client"][c.lang]), False),
+        (c.t("Team", "Team"), esc(p["team"][c.lang]), False),
+        (c.t("Leistungsumfang", "Scope of works"), bullet_list([esc(s) for s in p["scope"][c.lang]]), True),
+    ]
+    items = "".join(
+        f'<li class="fp-item{" fp-item--wide" if wide else ""}"><span class="fp-num" aria-hidden="true">{i:02d}.</span>'
+        f'<h4 class="fp-label">{label}</h4>{value if wide else f"<p>{value}</p>"}</li>'
+        for i, (label, value, wide) in enumerate(facts, 1)
+    )
     return f"""<article class="featured-project">
-  <div>{ba_pair(c, p)}</div>
-  <div>
-    <span class="eyebrow">{esc(CAT[p["type"]]["label"][c.lang])} · {esc(p["city"])}</span>
-    <h3><a href="{c.url('p:' + p['slug'])}">{esc(p["title"][c.lang])}</a></h3>
-    {project_table(c, p)}
-    {ref_box(c, p)}
-    <div class="mt-6">{cert_tags(p)}</div>
+  <div class="fp-media">{ba_slider(c, p)}</div>
+  <div class="fp-body">
+    <h3 class="fp-title"><a href="{c.url('p:' + p['slug'])}">{esc(p["title"][c.lang])}</a></h3>
+    <p class="fp-sub">{esc(p["summary"][c.lang])}</p>
+    <ol class="fp-list">{items}</ol>
+    <p class="fp-more"><a class="link-arrow" href="{c.url('p:' + p['slug'])}">{c.t("Projektdetails und Referenzschreiben", "Project details and reference letter")} {icon("arrow-right")}</a></p>
   </div>
 </article>"""
 
 
 def project_card(c, p, level=3):
     _, after = img_paths(p)
+    iw, ih = img_size(p)
     badge = f'<span class="tag tag--sample badge-sample">{c.t("Musterdaten", "Sample data")}</span>' if p["sample"] else ""
     return f"""<article class="project-card" data-type="{p['type']}" data-city="{esc(p['city'])}" data-size="{p['size']}" data-year="{p['end']}">
-  <div class="project-card-media"><img src="{c.asset(after)}" width="600" height="400" loading="lazy" decoding="async" alt="">{badge}</div>
+  <div class="project-card-media"><img src="{c.asset(after)}" width="{iw}" height="{ih}" loading="lazy" decoding="async" alt="">{badge}</div>
   <div class="project-card-body">
     <div class="tag-row"><span class="tag">{esc(CAT[p["type"]]["label"][c.lang])}</span></div>
     {h(level, f'<a href="{c.url("p:" + p["slug"])}">{esc(p["title"][c.lang])}</a>')}
@@ -402,20 +475,25 @@ def project_card(c, p, level=3):
 
 
 def contact_card(c, person, level=3):
+    """One contact: portrait, role, name, e-mail and phone, focus and tasks.
+    The parts are direct children of the card so that a CSS subgrid can line the rows up."""
     sub = f'<p class="contact-role-de" lang="de">({person["role_de"]})</p>' if c.lang == "en" else '<p class="contact-role-de">&nbsp;</p>'
     lines = [
         f'<li>{icon("mail")}<span><span class="visually-hidden">{c.t("E-Mail", "Email")}: </span>{mailto(person["email"])}</span></li>',
         f'<li>{icon("phone")}<span><span class="visually-hidden">{c.t("Telefon", "Phone")}: </span>{tel(person["phone"])}</span></li>',
     ]
-    if person["office"]:
-        lines.append(f'<li>{icon("pin")}<span><span class="visually-hidden">{c.t("Büro", "Office")}: </span>{esc(person["office"])}</span></li>')
     focus = ""
     if person["focus"]:
-        focus = f'<p class="text-muted mb-0" style="font-size:var(--fs-small)"><strong>{c.t("Schwerpunkt", "Specialisation")}:</strong> {esc(person["focus"][c.lang])}</p>'
+        focus = f'<p class="contact-focus"><strong>{c.t("Schwerpunkt", "Specialisation")}:</strong> {esc(person["focus"][c.lang])}</p>'
+    alt = f'{person["name"]}, {person["role"][c.lang]}'
+    photo = ""
+    if person.get("photo"):
+        photo = (f'<div class="contact-photo"><img src="{c.asset(person["photo"])}" width="800" height="1072" '
+                 f'loading="lazy" decoding="async" alt="{esc(alt)}"></div>')
     return f"""<article class="contact-card">
-  <!-- PLATZHALTER: Name und Kontaktdaten -->
-  {h(level, esc(person["role"][c.lang]), "contact-role")}
-  {sub}
+  {photo}
+  <!-- PLATZHALTER: Kontaktdaten prüfen -->
+  <div class="contact-head">{h(level, esc(person["role"][c.lang]), "contact-role")}{sub}</div>
   <p class="contact-name">{esc(person["name"])}</p>
   <ul class="contact-lines">{"".join(lines)}</ul>
   {focus}
@@ -449,11 +527,29 @@ def doc_table(c, level=None):
 
 
 def figures_block(c):
-    items = "".join(
-        f'<div class="figure"><span class="figure-value">{v}</span><span class="figure-label">{esc(label[c.lang])}</span></div>'
-        for v, label in D.FIGURES
+    """Strengths in words, no statistics: icon, one- or two-word title, short text."""
+    items = [
+        ("experience", c.t("Erfahrung", "Experience"),
+         c.t("Langjährige Zusammenarbeit mit Kommunen und öffentlichen Einrichtungen in Baden-Württemberg.",
+             "Long-standing work for municipalities and public institutions in Baden-Württemberg.")),
+        ("standards", c.t("Normen", "Standards"),
+         c.t("Ausführung nach VOB/B, DIN und GEG mit zertifiziertem Qualitätsmanagement nach ISO.",
+             "Execution according to VOB/B, DIN and GEG with ISO-certified quality management.")),
+        ("team", c.t("Eigenes Personal", "Own staff"),
+         c.t("Fest angestellte Fachkräfte und feste Teams über die gesamte Projektdauer.",
+             "Permanently employed specialists and stable teams for the full project duration.")),
+        ("schedule", c.t("Termintreue", "Reliability"),
+         c.t("Verbindliche Bauzeitenpläne mit Pufferzeiten und wöchentlicher Berichterstattung.",
+             "Binding construction schedules with buffers and weekly reporting.")),
+        ("transparency", c.t("Transparenz", "Transparency"),
+         c.t("Schriftliche Freigabe jeder Änderung und wöchentlicher Soll-Ist-Kostenbericht.",
+             "Written approval of every change and a weekly budget-versus-actual cost report.")),
+    ]
+    cells = "".join(
+        f'<li class="hl-item">{icon(ic, "icon icon--xl")}<p class="hl-title">{title}</p><p class="hl-text">{text}</p></li>'
+        for ic, title, text in items
     )
-    return f'<!-- PLATZHALTER: Kennzahlen prüfen -->\n<div class="figures">{items}</div>'
+    return f'<ul class="highlights">{cells}</ul>'
 
 
 def check_list(items):
@@ -464,42 +560,66 @@ def bullet_list(items):
     return '<ul class="bullet-list">' + "".join(f"<li>{x}</li>" for x in items) + "</ul>"
 
 
-def credentials(c):
-    pillars = [
-        (c.t("Säule 1", "Pillar 1"), c.t("Erfahrung und Historie", "Experience and track record"), [
-            c.t("Langjährige Zusammenarbeit mit öffentlichen Einrichtungen", "Long-standing work for public institutions"),
-            c.t("Zahlreiche abgeschlossene Projekte unterschiedlicher Größenordnung", "Numerous completed projects of different sizes"),
-            c.t("Partner vieler Kommunen in Baden-Württemberg", "Partner to many municipalities in Baden-Württemberg"),
-            c.t("Zuverlässige Einhaltung vertraglicher Fertigstellungstermine", "Reliable adherence to contractual completion dates"),
-            c.t("Hoher Anteil an Folgeaufträgen bestehender Auftraggeber", "High share of repeat orders from existing clients"),
-        ], c.t("Wir arbeiten für: Schulen, Kindertagesstätten, Krankenhäuser, Verwaltungsgebäude, Sozialzentren, Museen.",
-               "We work for: schools, day-care centres, hospitals, administrative buildings, social centres, museums.")),
-        (c.t("Säule 2", "Pillar 2"), c.t("Zertifizierung und Normen", "Certification and standards"), [
-            c.t("ISO 9001:2015 – zertifiziertes Qualitätsmanagement", "ISO 9001:2015 – certified quality management"),
-            c.t("VOB/B- und DIN-konforme Ausführung", "Execution in line with VOB/B and DIN"),
-            c.t("GEG-konforme Ausführung (Gebäudeenergiegesetz)", "GEG-compliant execution (Buildings Energy Act)"),
-            c.t("DGUV Regel 100-001 – Arbeitsschutz auf der Baustelle", "DGUV Rule 100-001 – occupational safety on site"),
-            c.t("Arbeitsbedingungen nach ArbSchG und ArbStättV", "Working conditions according to ArbSchG and ArbStättV"),
-            c.t("5 Jahre Mängelhaftung nach § 634a BGB", "5-year liability for defects under § 634a BGB"),
-        ], c.t("Zertifikate ausgestellt durch unabhängige Stellen (TÜV, DEKRA).",
-               "Certificates issued by independent bodies (TÜV, DEKRA).")),
-        (c.t("Säule 3", "Pillar 3"), c.t("Ressourcen und Kapazitäten", "Resources and capacity"), [
-            c.t("Großer Stamm fest angestellter Fachkräfte", "Large core of permanently employed specialists"),
-            c.t("Netzwerk qualifizierter Nachunternehmer", "Network of qualified subcontractors"),
-            c.t("Gesicherte Kapazität für parallele Projekte", "Guaranteed capacity for parallel projects"),
-            c.t("Eigenes Materiallager für kurzfristige Einsätze", "Own material store for short-notice assignments"),
-            c.t("Erfahrene Poliere und Bauleiter", "Experienced foremen and site managers"),
-            c.t("Pufferressourcen für Planänderungen", "Buffer resources for design changes"),
-        ], c.t("Parallele Projekte unterschiedlicher Größenordnung sind möglich.",
-               "Parallel projects of different sizes are possible.")),
+def competence(c):
+    """Competence slider: one picture per slide, short text inside the picture (bottom left)."""
+    slides = [
+        (c.t("Erfahrung", "Experience"),
+         c.t("Erfahrung und Historie", "Experience and track record"),
+         c.t("Langjährige Zusammenarbeit mit Kommunen und öffentlichen Einrichtungen: viele abgeschlossene Projekte, zuverlässig eingehaltene Termine und ein hoher Anteil an Folgeaufträgen.",
+             "Long-standing work for municipalities and public institutions: many completed projects, reliably met deadlines and a high share of repeat orders."),
+         c.t("Langjährige Praxis im öffentlichen Bau.", "Long-standing practice in public construction.")),
+        (c.t("Normen", "Standards"),
+         c.t("Zertifizierung und Normen", "Certification and standards"),
+         c.t("Qualitätsmanagement nach ISO 9001:2015, Ausführung nach VOB/B, DIN und GEG, Arbeitsschutz nach DGUV und fünf Jahre Mängelhaftung. Nachweise durch TÜV und DEKRA.",
+             "Quality management to ISO 9001:2015, execution to VOB/B, DIN and GEG, occupational safety to DGUV and five years' liability for defects. Proof issued by TÜV and DEKRA."),
+         c.t("Geprüfte Standards, belegt durch unabhängige Stellen.", "Verified standards, proven by independent bodies.")),
+        (c.t("Ressourcen", "Resources"),
+         c.t("Ressourcen und Kapazitäten", "Resources and capacity"),
+         c.t("Fest angestelltes Fachpersonal, ein Netzwerk qualifizierter Nachunternehmer und gesicherte Kapazität für parallele Projekte, mit eigenem Materiallager und Pufferressourcen.",
+             "Permanently employed specialists, a network of qualified subcontractors and guaranteed capacity for parallel projects, with its own material store and buffer resources."),
+         c.t("Gesicherte Kapazität auch für parallele Projekte.", "Guaranteed capacity, including for parallel projects.")),
     ]
-    cards = "".join(f"""<article class="card">
-  <span class="eyebrow">{label}</span>
-  <h3 class="card-title">{title}</h3>
-  {check_list(items)}
-  <p class="card-note">{note}</p>
-</article>""" for label, title, items, note in pillars)
-    return f'<div class="grid grid--3">{cards}</div>'
+    alts = [
+        c.t("Bauleiter mit Schutzhelm und Vertreter der Kommune prüfen Pläne vor einem sanierten Schulgebäude.",
+            "A site manager in a hard hat and a municipal representative review drawings in front of a refurbished school building."),
+        c.t("Ein unabhängiger Prüfer und der Bauleiter kontrollieren mit Wasserwaage und Tablet ein eingebautes Fenster.",
+            "An independent inspector and the site manager check an installed window with a spirit level and a tablet."),
+        c.t("Mehrere Teams arbeiten parallel in einem Rohbau an Fenstern, Trockenbau und Installation, ein Polier koordiniert.",
+            "Several teams work in parallel in a building shell on windows, drywall and installations while a foreman coordinates."),
+    ]
+    total = len(slides)
+    items = ""
+    for i, (chip, title, text, caption) in enumerate(slides, 1):
+        items += f"""<li class="cs-slide" role="group" aria-roledescription="{c.t('Folie', 'slide')}" aria-label="{i} / {total}" data-caption="{esc(caption)}">
+  <img class="cs-img" src="{c.asset(f'assets/img/competence/slide-{i}.jpg')}" width="1800" height="1004" loading="lazy" decoding="async" alt="{esc(alts[i - 1])}">
+  <span class="cs-chip">{chip}</span>
+  <div class="cs-text"><h3>{title}</h3><p>{text}</p></div>
+</li>"""
+    first_caption = slides[0][3]
+    return f"""<div class="cs" role="group" aria-roledescription="carousel" aria-labelledby="credentials-title">
+  <div class="cs-head">
+    <div class="cs-head-left">
+      <h2 id="credentials-title">{c.t("Warum Kommunen und öffentliche Auftraggeber uns vertrauen", "Why municipalities and public authorities trust us")}</h2>
+    </div>
+    <p class="cs-intro">{c.t("Erfahrung, geprüfte Standards und gesicherte Kapazitäten – die drei Grundlagen unserer Arbeit für die öffentliche Hand.",
+                             "Experience, verified standards and guaranteed capacity – the three foundations of our work for the public sector.")}</p>
+  </div>
+  <div class="cs-main">
+    <div class="cs-side">
+      <div class="cs-status" aria-live="polite" aria-atomic="true">
+        <p class="cs-count"><span class="cs-num">01</span><span class="cs-total">/{total:02d}</span></p>
+        <p class="cs-caption">{esc(first_caption)}</p>
+      </div>
+      <div class="cs-controls">
+        <button class="cs-btn cs-prev" type="button" aria-label="{c.t('Vorherige Folie', 'Previous slide')}">{icon("arrow-left")}</button>
+        <button class="cs-btn cs-next" type="button" aria-label="{c.t('Nächste Folie', 'Next slide')}">{icon("arrow-right")}</button>
+      </div>
+    </div>
+    <div class="cs-viewport" tabindex="0" aria-label="{c.t('Kompetenzen, mit den Pfeiltasten blättern', 'Credentials, use the arrow keys to browse')}">
+      <ul class="cs-track">{items}</ul>
+    </div>
+  </div>
+</div>"""
 
 
 def requirements(c):
@@ -583,14 +703,14 @@ def section_head(title, intro=None, eyebrow=None, hid=None, level=2):
 
 
 def cta_band(c):
-    return f"""<section class="section section--blue on-dark" aria-labelledby="cta-title">
+    return f"""<section class="section section--cta" aria-labelledby="cta-title">
   <div class="container cta-band">
     <div>
       <h2 id="cta-title">{c.t("Unterlagen für Ihre Ausschreibung", "Documents for your tender")}</h2>
       <p>{c.t("Projektarchiv, Zertifikate und Referenzschreiben – ohne Registrierung.", "Project archive, certificates and reference letters – no registration required.")}</p>
     </div>
     <div class="btn-row">
-      <a class="btn btn--light" href="{c.url('tenders', frag='#downloads')}">{icon("download")}{c.t("Zu den Unterlagen", "Go to documents")}</a>
+      <a class="btn btn--primary" href="{c.url('tenders', frag='#downloads')}">{icon("download")}{c.t("Zu den Unterlagen", "Go to documents")}</a>
     </div>
   </div>
 </section>"""
@@ -600,57 +720,46 @@ def cta_band(c):
 def page_home(lang):
     c = Ctx(lang, "home")
     featured = [p for p in D.PROJECTS if p["featured"]]
-    hero_p = featured[0]
     co = D.COMPANY
     body = f"""
+<div class="hero-track">
 <section class="hero" aria-labelledby="hero-title">
-  <div class="container">
+  <div class="hero-media" aria-hidden="true">
+    <img class="hero-poster" src="{c.asset('assets/video/hero-poster.jpg')}" width="1920" height="1080" fetchpriority="high" decoding="async" alt="">
+    <video class="hero-video" muted playsinline preload="none" tabindex="-1" width="1280" height="720"
+           data-src="{c.asset('assets/video/hero-scrub.mp4')}" data-src-small="{c.asset('assets/video/hero-scrub-sm.mp4')}"></video>
+  </div>
+  <div class="container hero-inner">
     <div class="hero-grid">
-      <div>
-        <span class="eyebrow">{c.t("Generalunternehmer · Stuttgart · Baden-Württemberg", "General contractor · Stuttgart · Baden-Württemberg")}</span>
+      <div class="hero-copy">
         <h1 id="hero-title">{c.t("Zuverlässiger Partner für öffentliche und kommunale Bauprojekte", "A reliable partner for public and municipal construction projects")}</h1>
         <p class="lead">{c.t("Langjährige Erfahrung. Zahlreiche abgeschlossene Projekte. Unterschiedliche Größenordnungen. VOB/DIN-konform.",
                              "Long-standing experience. Numerous completed projects. Every scale. VOB/DIN compliant.")}</p>
-        <ul class="proof-list">
-          <li>{icon("check-circle")}<span>{c.t("Umfangreiches Archiv öffentlicher Referenzprojekte", "Extensive archive of public reference projects")}</span></li>
-          <li>{icon("check-circle")}<span>{c.t("Zuverlässige Einhaltung vereinbarter Termine", "Reliable adherence to agreed deadlines")}</span></li>
-          <li>{icon("check-circle")}<span>{c.t("Großer Stamm fest angestellter Fachkräfte", "Large core of permanently employed specialists")}</span></li>
-        </ul>
-        <p class="hero-sub">{c.t("ISO 9001. VOB/DIN. GEG. Bereit für Ihre Ausschreibung.", "ISO 9001. VOB/DIN. GEG. Ready for your tender.")}</p>
         <div class="btn-row">
           <a class="btn btn--primary btn--lg" href="{c.doc('archive')}" download>{icon("download")}{c.t("Projektarchiv herunterladen (PDF)", "Download project archive (PDF)")}</a>
-          <a class="link-arrow" href="#tender-contacts">{c.t("Ansprechpartner für Ausschreibungen", "Contacts for tenders")} {icon("arrow-right")}</a>
         </div>
       </div>
-      <figure class="hero-figure">
-        <img src="{c.asset('assets/img/hero.svg')}" width="480" height="600" fetchpriority="high" decoding="async"
-             alt="{esc(c.t(f'{hero_p["title"]["de"]} nach der Generalsanierung', f'{hero_p["title"]["en"]} after complete refurbishment'))}">
-        <figcaption>{esc(hero_p["title"][c.lang])}, {hero_p["end"]} · {c.t("Platzhalterbild", "Placeholder image")}</figcaption>
-      </figure>
     </div>
   </div>
 </section>
+</div>
 
-<section class="section" aria-label="{c.t('Kennzahlen', 'Key figures')}" style="padding-bottom:0">
+<section class="section" aria-label="{c.t('Unsere Stärken', 'Our strengths')}" style="padding-bottom:0">
   <div class="container">{figures_block(c)}</div>
 </section>
 
-<section class="section" aria-labelledby="credentials-title">
+<section class="section">
   <div class="container">
-    {section_head(c.t("Warum Kommunen und öffentliche Auftraggeber uns vertrauen", "Why municipalities and public authorities trust us"),
-                  c.t("Erfahrung, geprüfte Standards und gesicherte Kapazitäten – die drei Grundlagen unserer Arbeit für die öffentliche Hand.",
-                      "Experience, verified standards and guaranteed capacity – the three foundations of our work for the public sector."),
-                  c.t("Kompetenz", "Credentials"), "credentials-title")}
-    {credentials(c)}
+    {competence(c)}
   </div>
 </section>
 
 <section class="section section--grey" aria-labelledby="portfolio-title">
   <div class="container">
     {section_head(c.t("Referenzen: öffentliche Bauprojekte", "References: public construction projects"),
-                  c.t("Ausschließlich öffentliche Auftraggeber. Zu jedem Projekt: Zeitraum, Auftragsvolumen, Auftraggeber, Leistungsumfang und Referenzschreiben.",
-                      "Public clients only. For every project: period, contract value, client, scope of works and reference letter."),
-                  c.t("Portfolio", "Portfolio"), "portfolio-title")}
+                  c.t("Ausschließlich öffentliche Auftraggeber. Zu jedem Projekt: Zeitraum, Auftragsvolumen, Auftraggeber und Leistungsumfang. Referenzschreiben finden Sie auf den Projektseiten.",
+                      "Public clients only. For every project: period, contract value, client and scope of works. Reference letters are on the project pages."),
+                  hid="portfolio-title")}
     {"".join(featured_project(c, p) for p in featured)}
     <div class="btn-row mt-7">
       <a class="btn btn--outline" href="{c.url('projects')}">{c.t("Alle öffentlichen Projekte ansehen", "View all public projects")} {icon("arrow-right")}</a>
@@ -663,7 +772,7 @@ def page_home(lang):
     {section_head(c.t("Unsere Zusagen für öffentliche Projekte", "Our commitments for public projects"),
                   c.t("Verbindliche Standards, die wir in jedem Vertrag mit öffentlichen Auftraggebern einhalten.",
                       "Binding standards we meet in every contract with public clients."),
-                  c.t("Normen und Nachweise", "Standards and proof"), "standards-title")}
+                  hid="standards-title")}
     {requirements(c)}
     <div class="btn-row mt-7">
       <a class="btn btn--primary" href="{c.doc('methodology')}" download>{icon("download")}{c.t("Projektmanagement-Methodik herunterladen (PDF)", "Download project management methodology (PDF)")}</a>
@@ -677,8 +786,8 @@ def page_home(lang):
     {section_head(c.t("Ansprechpartner für Ausschreibungen und Vergabe", "Contacts for public procurement and tenders"),
                   c.t("Feste Ansprechpartner für Vergabestellen – von der Angebotsphase bis zur Abnahme.",
                       "Dedicated contacts for contracting authorities – from the bidding phase to acceptance."),
-                  c.t("Kontakt", "Contact"), "tender-contacts")}
-    <div class="grid grid--3">{"".join(contact_card(c, p) for p in D.PEOPLE)}</div>
+                  hid="tender-contacts")}
+    <div class="grid grid--3 grid--contacts">{"".join(contact_card(c, p) for p in D.PEOPLE)}</div>
     {emergency_block(c)}
   </div>
 </section>
@@ -687,21 +796,22 @@ def page_home(lang):
   <div class="container">
     {section_head(c.t("Unterlagen zum Download", "Documents for download"),
                   c.t("Alle Nachweise für Ihre Eignungsprüfung an einem Ort.", "All proof for your eligibility assessment in one place."),
-                  c.t("Downloads", "Downloads"), "downloads-title")}
+                  hid="downloads-title")}
     {doc_table(c)}
   </div>
 </section>
 """
     jsonld = ('{"@context":"https://schema.org","@type":"GeneralContractor","name":"SDTT GmbH",'
+              f'"logo":"{D.SITE_URL}/assets/img/logo/SDTT_Logo_Haupt_Marineblau.svg",'
               f'"url":"{D.SITE_URL}/","email":"{co["email"]}","telephone":"{co["phone"][1]}",'
-              f'"address":{{"@type":"PostalAddress","streetAddress":"{co["street"]}","postalCode":"70182","addressLocality":"Stuttgart","addressRegion":"Baden-Württemberg","addressCountry":"DE"}},'
+              f'"address":{{"@type":"PostalAddress","streetAddress":"{co["street"]}","postalCode":"40474","addressLocality":"Düsseldorf","addressRegion":"Nordrhein-Westfalen","addressCountry":"DE"}},'
               '"areaServed":"Baden-Württemberg"}')
     render(c,
            c.t("SDTT – Generalunternehmer für öffentliche Bauprojekte in Stuttgart und Baden-Württemberg",
                "SDTT – General contractor for public construction projects in Stuttgart and Baden-Württemberg"),
            c.t("Zuverlässiger Partner für öffentliche und kommunale Bauprojekte: Schulen, Kliniken, Verwaltungsgebäude. ISO 9001, VOB/DIN, GEG. Unterlagen für Ausschreibungen ohne Registrierung.",
                "A reliable partner for public and municipal construction projects: schools, hospitals, administrative buildings. ISO 9001, VOB/DIN, GEG. Tender documents without registration."),
-           body, jsonld=jsonld)
+           body, scripts=["assets/js/hero-scrub.js", "assets/js/ba-slider.js", "assets/js/slider.js"], jsonld=jsonld)
 
 
 def page_projects(lang):
@@ -723,14 +833,14 @@ def page_projects(lang):
     cards = "".join(project_card(c, p) for p in D.PROJECTS)
     body = page_header(
         c, c.t("Öffentliche Projekte", "Public projects"),
-        c.t("Referenzen ausschließlich für öffentliche Auftraggeber: Bildung, Gesundheit, Verwaltung, Kultur und Infrastruktur in Stuttgart und Baden-Württemberg.",
-            "References exclusively for public clients: education, healthcare, administration, culture and infrastructure in Stuttgart and Baden-Württemberg."),
+        c.t("Referenzen ausschließlich für öffentliche Auftraggeber: Bildung, Gesundheit, Verwaltung und Kultur in Stuttgart und Baden-Württemberg.",
+            "References exclusively for public clients: education, healthcare, administration and culture in Stuttgart and Baden-Württemberg."),
         crumbs=[(c.t("Öffentliche Projekte", "Public projects"), None)],
     ) + f"""
 <section class="section" aria-labelledby="categories-title">
   <div class="container">
     {section_head(c.t("Projektbereiche", "Project categories"), level=2, hid="categories-title")}
-    <div class="grid grid--3">{tiles}</div>
+    <div class="grid grid--4">{tiles}</div>
   </div>
 </section>
 
@@ -759,29 +869,24 @@ def page_projects(lang):
 </section>
 {cta_band(c)}"""
     render(c, c.t("Öffentliche Projekte", "Public projects"),
-           c.t("Referenzprojekte für Kommunen und öffentliche Auftraggeber in Baden-Württemberg: Schulen, Kliniken, Verwaltungsgebäude, Kultur und Infrastruktur.",
-               "Reference projects for municipalities and public clients in Baden-Württemberg: schools, hospitals, administrative buildings, culture and infrastructure."),
+           c.t("Referenzprojekte für Kommunen und öffentliche Auftraggeber in Baden-Württemberg: Schulen, Kliniken, Verwaltungsgebäude und Kultur.",
+               "Reference projects for municipalities and public clients in Baden-Württemberg: schools, hospitals, administrative buildings and culture."),
            body, scripts=["assets/js/projects-filter.js"])
 
 
 def page_project(lang, p):
     c = Ctx(lang, "p:" + p["slug"])
     title = p["title"][c.lang]
-    notice = ""
-    if p["sample"]:
-        notice = f'<div class="notice mt-6 mb-0">{c.t("Musterprojekt: Alle Angaben sind Platzhalter und werden durch geprüfte Projektdaten ersetzt.", "Sample project: all details are placeholders and will be replaced with verified project data.")}</div>'
     paragraphs = p.get("text", {}).get(c.lang) or [p["summary"][c.lang]]
     text = "".join(f"<p>{esc(x)}</p>" for x in paragraphs)
     body = page_header(
         c, esc(title), esc(p["summary"][c.lang]),
         crumbs=[(c.t("Öffentliche Projekte", "Public projects"), c.url("projects")), (esc(title), None)],
-        eyebrow=f'{esc(CAT[p["type"]]["label"][c.lang])} · {esc(p["city"])} · <span class="mono">{period(p)}</span>',
-        extra=notice,
     ) + f"""
 <section class="section" aria-label="{c.t('Fotodokumentation', 'Photo documentation')}">
   <div class="container">
     {ba_pair(c, p, eager=True)}
-    <p class="text-muted mt-6" style="font-size:var(--fs-small)">{c.t("Fotodokumentation zum Vergleich von Ausgangs- und Endzustand. Platzhalterbilder.", "Photo documentation comparing the initial and final condition. Placeholder images.")}</p>
+    <p class="text-muted mt-6" style="font-size:var(--fs-small)">{c.t("Fotodokumentation zum Vergleich von Ausgangs- und Endzustand.", "Photo documentation comparing the initial and final condition.")}{c.t(" Platzhalterbilder.", " Placeholder images.") if p["sample"] and not p.get("photos") else ""}</p>
   </div>
 </section>
 <section class="section section--grey">
@@ -797,7 +902,7 @@ def page_project(lang, p):
       </div>
       <div>
         <h2>{c.t("Projektdaten", "Project data")}</h2>
-        <div class="card">{project_table(c, p)}{ref_box(c, p)}</div>
+        <div class="card">{project_table(c, p)}</div>
       </div>
     </div>
     <div class="btn-row mt-7">
@@ -809,7 +914,7 @@ def page_project(lang, p):
     render(c, title,
            c.t(f"{title}: {p['summary']['de']} Auftraggeber: {p['client']['de']}.",
                f"{title}: {p['summary']['en']} Client: {p['client']['en']}."),
-           body, section="projects")
+           body, section="projects", scripts=["assets/js/lightbox.js"])
 
 
 def page_standards(lang):
@@ -932,8 +1037,8 @@ def page_company(lang):
         <h2 id="history-title">{c.t("Geschichte", "History")}</h2>
         <p>{c.t("Seit über 20 Jahren realisiert SDTT Bauprojekte für Kommunen, Landkreise und öffentliche Einrichtungen in der Region Stuttgart und in Baden-Württemberg.",
                 "For more than 20 years SDTT has delivered construction projects for municipalities, districts and public institutions in the Stuttgart region and Baden-Württemberg.")}</p>
-        <p>{c.t("Aus einem Handwerksbetrieb ist ein Generalunternehmer mit eigenem Fachpersonal entstanden. Unser Projektarchiv umfasst über 120 abgeschlossene öffentliche Projekte – von der Kita-Sanierung bis zur Erweiterung einer Feuerwache.",
-                "What began as a craft business has grown into a general contractor with its own specialist staff. Our project archive covers more than 120 completed public projects – from day-care centre refurbishments to fire station extensions.")}</p>
+        <p>{c.t("Aus einem Handwerksbetrieb ist ein Generalunternehmer mit eigenem Fachpersonal entstanden. Unser Projektarchiv umfasst über 120 abgeschlossene öffentliche Projekte – von der Kita-Sanierung bis zur Modernisierung eines Rathauses.",
+                "What began as a craft business has grown into a general contractor with its own specialist staff. Our project archive covers more than 120 completed public projects – from day-care centre refurbishments to town hall modernisations.")}</p>
       </div>
       <div>
         <h2>{c.t("Team", "Team")}</h2>
@@ -1014,8 +1119,8 @@ def page_tenders(lang):
         c.t("Abnahme und Gewährleistung", "Acceptance and warranty"),
     ]
     texts = [
-        c.t("Senden Sie uns die Bekanntmachung oder die Vergabeunterlagen an ausschreibungen@sdtt.de. Wir bestätigen den Eingang innerhalb eines Werktags.",
-            "Send us the contract notice or tender documents at ausschreibungen@sdtt.de. We confirm receipt within one working day."),
+        c.t(f"Senden Sie uns die Bekanntmachung oder die Vergabeunterlagen an {D.PEOPLE[0]['email']}. Wir bestätigen den Eingang innerhalb eines Werktags.",
+            f"Send us the contract notice or tender documents at {D.PEOPLE[0]['email']}. We confirm receipt within one working day."),
         c.t("Zertifikate, Referenzen, Versicherungsnachweise und Lebensläufe stehen unten zum Download bereit. Projektspezifische Nachweise folgen in der Regel innerhalb von zwei Werktagen.",
             "Certificates, references, proof of insurance and CVs are available for download below. Project-specific proof usually follows within two working days."),
         c.t("Fristgerechte Abgabe über die von Ihnen vorgegebene Vergabeplattform, vollständig und formgerecht.",
@@ -1053,7 +1158,7 @@ def page_tenders(lang):
 <section class="section" aria-labelledby="contacts">
   <div class="container">
     {section_head(c.t("Ansprechpartner für Ausschreibungen", "Contacts for tenders"), hid="contacts")}
-    <div class="grid grid--3">{"".join(contact_card(c, p) for p in D.PEOPLE)}</div>
+    <div class="grid grid--3 grid--contacts">{"".join(contact_card(c, p) for p in D.PEOPLE)}</div>
     {emergency_block(c)}
   </div>
 </section>
@@ -1082,7 +1187,7 @@ def page_contact(lang):
 <section class="section" aria-labelledby="departments-title">
   <div class="container">
     {section_head(c.t("Abteilungen", "Departments"), hid="departments-title")}
-    <div class="grid grid--3">{"".join(contact_card(c, p) for p in D.PEOPLE)}</div>
+    <div class="grid grid--3 grid--contacts">{"".join(contact_card(c, p) for p in D.PEOPLE)}</div>
     {emergency_block(c)}
   </div>
 </section>
@@ -1244,7 +1349,7 @@ def page_404():
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex">
 <title>Seite nicht gefunden – Page not found | SDTT</title>
-<link rel="icon" href="/assets/img/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/assets/img/logo/SDTT_Bildzeichen_Marineblau.svg" type="image/svg+xml">
 <link rel="stylesheet" href="/assets/css/tokens.css">
 <link rel="stylesheet" href="/assets/css/main.css">
 </head>
@@ -1324,14 +1429,11 @@ def building_svg(floors, seed, after, w=600, h=400):
 
 def build_images():
     for p in D.PROJECTS:
+        if p.get("photos"):
+            continue  # real photos are supplied as files
         before, after = img_paths(p)
         write(before, building_svg(p["floors"], p["seed"], False))
         write(after, building_svg(p["floors"], p["seed"], True))
-    write("assets/img/hero.svg", building_svg(5, 3, True, 480, 600))
-    write("assets/img/favicon.svg",
-          '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 44 44"><rect width="44" height="44" fill="#1a3d66"/>'
-          '<rect x="9" y="11" width="26" height="4" fill="#fff"/><rect x="9" y="20" width="20" height="4" fill="#fff"/>'
-          '<rect x="9" y="29" width="26" height="4" fill="#4a7c59"/></svg>\n')
 
 
 # ---------------------------------------------------------------- PDFs
