@@ -109,6 +109,19 @@ PEOPLE = [
     },
 ]
 
+# Managing director (company page) — name, e-mail and phone as supplied by the client.
+DIRECTOR = {
+    "key": "director",
+    "role": {"de": "Geschäftsführung", "en": "Managing director"},
+    "role_de": "Geschäftsführer",
+    "name": "Shalva Papismedov",
+    "photo": "assets/img/team/shalva-papismedov.jpg",
+    "email": "shalva.papismedov@gmx.de",
+    "phone": ("+49 211 94213301", "+4921194213301"),
+    "focus": None,
+    "fn": None,
+}
+
 # Seven downloadable documents (spec 4.6). Files are generated as placeholders.
 DOCS = [
     {

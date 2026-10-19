@@ -507,6 +507,7 @@ svg.icon.icon--xl { width: 3rem; height: 3rem; color: var(--color-primary); stro
 .contact-lines { list-style: none; margin: 0 0 var(--space-3); }
 .contact-lines li { display: flex; gap: var(--space-3); align-items: flex-start; margin: 0; padding: var(--space-1) 0; font-size: 0.9375rem; }
 .contact-lines .icon { color: var(--color-primary); margin-top: 0.2em; width: 1.1em; height: 1.1em; }
+.contact-card--short .contact-lines { margin-bottom: var(--space-5); }
 .contact-lines a { white-space: nowrap; } /* an e-mail address always stays on one line */
 .contact-focus { margin: 0 0 var(--space-4); font-size: var(--fs-small); line-height: 1.45; color: var(--color-text-muted); }
 .contact-fn { font-size: var(--fs-small); color: var(--color-text-muted); margin: auto var(--space-5) var(--space-5); padding-top: var(--space-4); border-top: 1px solid var(--color-border); }
@@ -680,3 +681,33 @@ html.lenis, html.lenis body { height: auto; }
   .card, .project-card, .featured-project, .req { break-inside: avoid; box-shadow: none; }
   .rv-b, .rv-p, .rv-hd, .rv-i, .rv-f, .rv-fade { opacity: 1 !important; transform: none !important; clip-path: none !important; animation: none !important; }
 }
+
+/* ---------- Consent banner and settings (consent.js) ---------- */
+.link-btn { background: none; border: 0; padding: 0; font: inherit; color: inherit; text-decoration: underline; cursor: pointer; }
+.link-btn:hover { text-decoration-thickness: 2px; }
+.footer-bottom .link-btn { color: #fff; }
+.cm { position: fixed; z-index: 90; left: var(--space-4); right: var(--space-4); bottom: var(--space-4); max-width: 62rem; margin-inline: auto; padding: var(--space-5); background: #fff; color: var(--color-text); border: 1px solid var(--color-border-strong); border-top: 4px solid var(--color-primary); box-shadow: 0 12px 40px rgba(10, 25, 45, 0.25); display: grid; gap: var(--space-4); }
+.cm p { margin: 0; font-size: var(--fs-small); line-height: 1.5; color: var(--color-text-muted); }
+.cm a, .cm-dialog a { color: var(--color-primary); }
+.cm-title { font: 700 1.125rem/1.3 var(--font-heading); color: var(--color-primary); margin: 0 0 var(--space-1); }
+.cm-actions { display: flex; flex-wrap: wrap; gap: var(--space-3); }
+.cm-actions--end { justify-content: flex-end; margin-top: var(--space-5); }
+.cm-btn { flex: 1 1 10rem; min-height: 46px; padding: 0.6rem 1rem; font-size: 0.9375rem; }
+@media (min-width: 64rem) { .cm { grid-template-columns: 1fr auto; align-items: center; } .cm-btn { flex: 0 0 auto; } }
+.cm-dialog { border: 0; padding: 0; background: transparent; max-width: none; max-height: none; width: 100vw; height: 100vh; height: 100dvh; }
+.cm-dialog::backdrop { background: rgba(10, 18, 30, 0.7); }
+.cm-panel { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(40rem, calc(100vw - 2rem)); max-height: calc(100dvh - 2rem); overflow-y: auto; background: #fff; padding: var(--space-6); border-top: 4px solid var(--color-primary); }
+.cm-panel > p { margin: 0 0 var(--space-4); font-size: var(--fs-small); color: var(--color-text-muted); }
+.cm-x { position: absolute; top: 0.5rem; right: 0.5rem; width: 2.5rem; height: 2.5rem; border: 0; background: none; font-size: 1.75rem; line-height: 1; cursor: pointer; color: var(--color-text); }
+.cm-row { display: flex; gap: var(--space-4); align-items: flex-start; justify-content: space-between; padding: var(--space-4) 0; border-top: 1px solid var(--color-border); }
+.cm-row p { margin: 0; font-size: var(--fs-small); color: var(--color-text-muted); }
+.cm-h3 { font: 700 1rem/1.3 var(--font-heading); margin: 0 0 2px; }
+.cm-always { font: 500 var(--fs-xs) var(--font-mono); text-transform: uppercase; color: var(--color-accent-dark); white-space: nowrap; padding-top: 2px; }
+.cm-switch { position: relative; flex: 0 0 auto; width: 3rem; height: 1.75rem; }
+.cm-switch input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; z-index: 1; }
+.cm-slider { position: absolute; inset: 0; background: #b7bcc6; border-radius: 1rem; transition: background-color 0.2s; }
+.cm-slider::after { content: ""; position: absolute; top: 3px; left: 3px; width: 1.375rem; height: 1.375rem; background: #fff; border-radius: 50%; transition: transform 0.2s; }
+.cm-switch input:checked + .cm-slider { background: var(--color-accent); }
+.cm-switch input:checked + .cm-slider::after { transform: translateX(1.25rem); }
+.cm-switch input:focus-visible + .cm-slider { outline: 3px solid var(--color-primary); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { .cm-slider, .cm-slider::after { transition: none; } }

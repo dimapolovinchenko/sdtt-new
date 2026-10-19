@@ -317,7 +317,7 @@ def footer(c):
     </div>
     <div class="footer-bottom">
       <span>© 2024–{YEAR} SDTT GmbH. {c.t("Alle Rechte vorbehalten.", "All rights reserved.")}</span>
-      <span><a href="{c.url('imprint')}">{c.t("Impressum", "Imprint")}</a> · <a href="{c.url('privacy')}">{c.t("Datenschutz", "Privacy")}</a> · <a href="{c.url('terms')}">{c.t("AGB", "Terms")}</a></span>
+      <span><a href="{c.url('imprint')}">{c.t("Impressum", "Imprint")}</a> · <a href="{c.url('privacy')}">{c.t("Datenschutz", "Privacy")}</a> · <a href="{c.url('terms')}">{c.t("AGB", "Terms")}</a> · <button type="button" class="link-btn" data-consent-open>{c.t("Cookie-Einstellungen", "Cookie settings")}</button></span>
     </div>
   </div>
 </footer>"""
@@ -333,7 +333,8 @@ def render(c, title, desc, body, section=None, scripts=(), jsonld=None):
             + f'\n<main id="main" tabindex="-1">\n{body}\n</main>' + footer(c)
             + f'\n<script src="{c.asset("assets/js/lenis.min.js")}"></script>'
             + f'\n<script src="{c.asset("assets/js/smooth-scroll.js")}"></script>'
-            + f'\n<script src="{c.asset("assets/js/reveal.js")}"></script>\n</body>\n</html>\n')
+            + f'\n<script src="{c.asset("assets/js/reveal.js")}"></script>'
+            + f'\n<script src="{c.asset("assets/js/consent.js")}"></script>\n</body>\n</html>\n')
     # Never break a line between "§" and its number.
     write(c.path, html.replace("§ ", "§&nbsp;"))
 
@@ -485,19 +486,20 @@ def contact_card(c, person, level=3):
     focus = ""
     if person["focus"]:
         focus = f'<p class="contact-focus"><strong>{c.t("Schwerpunkt", "Specialisation")}:</strong> {esc(person["focus"][c.lang])}</p>'
+    fn = f'<p class="contact-fn"><strong>{c.t("Aufgabe", "Role")}:</strong> {esc(person["fn"][c.lang])}</p>' if person.get("fn") else ""
     alt = f'{person["name"]}, {person["role"][c.lang]}'
     photo = ""
     if person.get("photo"):
         photo = (f'<div class="contact-photo"><img src="{c.asset(person["photo"])}" width="800" height="1072" '
                  f'loading="lazy" decoding="async" alt="{esc(alt)}"></div>')
-    return f"""<article class="contact-card">
+    return f"""<article class="contact-card{' contact-card--short' if not fn else ''}">
   {photo}
   <!-- PLATZHALTER: Kontaktdaten prüfen -->
   <div class="contact-head">{h(level, esc(person["role"][c.lang]), "contact-role")}{sub}</div>
   <p class="contact-name">{esc(person["name"])}</p>
   <ul class="contact-lines">{"".join(lines)}</ul>
   {focus}
-  <p class="contact-fn"><strong>{c.t("Aufgabe", "Role")}:</strong> {esc(person["fn"][c.lang])}</p>
+  {fn}
 </article>"""
 
 
@@ -1035,15 +1037,15 @@ def page_company(lang):
       <div>
         <!-- PLATZHALTER: Firmengeschichte mit realen Daten ergänzen -->
         <h2 id="history-title">{c.t("Geschichte", "History")}</h2>
-        <p>{c.t("Seit über 20 Jahren realisiert SDTT Bauprojekte für Kommunen, Landkreise und öffentliche Einrichtungen in der Region Stuttgart und in Baden-Württemberg.",
-                "For more than 20 years SDTT has delivered construction projects for municipalities, districts and public institutions in the Stuttgart region and Baden-Württemberg.")}</p>
-        <p>{c.t("Aus einem Handwerksbetrieb ist ein Generalunternehmer mit eigenem Fachpersonal entstanden. Unser Projektarchiv umfasst über 120 abgeschlossene öffentliche Projekte – von der Kita-Sanierung bis zur Modernisierung eines Rathauses.",
-                "What began as a craft business has grown into a general contractor with its own specialist staff. Our project archive covers more than 120 completed public projects – from day-care centre refurbishments to town hall modernisations.")}</p>
+        <p>{c.t("Seit vielen Jahren realisiert SDTT Bauprojekte für Kommunen, Landkreise und öffentliche Einrichtungen in der Region Stuttgart und in Baden-Württemberg.",
+                "For many years SDTT has delivered construction projects for municipalities, districts and public institutions in the Stuttgart region and Baden-Württemberg.")}</p>
+        <p>{c.t("Aus einem Handwerksbetrieb ist ein Generalunternehmer mit eigenem Fachpersonal entstanden. Unser Projektarchiv umfasst viele abgeschlossene öffentliche Projekte – von der Kita-Sanierung bis zur Modernisierung eines Rathauses.",
+                "What began as a craft business has grown into a general contractor with its own specialist staff. Our project archive covers many completed public projects – from day-care centre refurbishments to town hall modernisations.")}</p>
       </div>
       <div>
         <h2>{c.t("Team", "Team")}</h2>
-        <p>{c.t("Über 90 fest angestellte Mitarbeitende: Bauingenieure, Bauleiter, Poliere, Fachhandwerker und Fachkräfte für Qualitätssicherung und Arbeitssicherheit.",
-                "More than 90 permanent employees: civil engineers, site managers, foremen, skilled tradespeople and specialists in quality assurance and site safety.")}</p>
+        <p>{c.t("Viele qualifizierte, fest angestellte Mitarbeitende: Bauingenieure, Bauleiter, Poliere, Fachhandwerker und Fachkräfte für Qualitätssicherung und Arbeitssicherheit.",
+                "Many qualified, permanently employed staff: civil engineers, site managers, foremen, skilled tradespeople and specialists in quality assurance and site safety.")}</p>
         {check_list([c.t("Eigene Bauleitung und Poliere in jedem Projekt", "Own site management and foremen on every project"),
                       c.t("Feste Teams über die gesamte Projektdauer", "Stable teams for the full project duration"),
                       c.t("Lebensläufe des Schlüsselpersonals als PDF", "CVs of key personnel as PDF")])}
@@ -1081,30 +1083,15 @@ def page_company(lang):
 <section class="section section--grey" aria-labelledby="management-title">
   <div class="container">
     {section_head(c.t("Geschäftsleitung", "Management"), hid="management-title")}
-    <!-- PLATZHALTER: Geschäftsführung -->
-    <div class="grid grid--2">
-      <article class="contact-card">
-        <h3 class="contact-role">{c.t("Geschäftsführung", "Managing director")}</h3>
-        <p class="contact-name mt-6"><span class="placeholder">{c.t("[PLATZHALTER Name]", "[PLACEHOLDER name]")}</span></p>
-        <ul class="contact-lines">
-          <li>{icon("mail")}<span>{mailto(D.COMPANY["email"])}</span></li>
-          <li>{icon("phone")}<span>{tel(D.COMPANY["phone"])}</span></li>
-        </ul>
-      </article>
-      <article class="contact-card">
-        <h3 class="contact-role">{c.t("Öffentliche Ausschreibungen", "Public procurement")}</h3>
-        <p class="contact-name mt-6">{esc(D.PEOPLE[0]["name"])}</p>
-        <ul class="contact-lines">
-          <li>{icon("mail")}<span>{mailto(D.PEOPLE[0]["email"])}</span></li>
-          <li>{icon("phone")}<span>{tel(D.PEOPLE[0]["phone"])}</span></li>
-        </ul>
-      </article>
+    <div class="grid grid--3">
+      {contact_card(c, D.DIRECTOR)}
+      {contact_card(c, dict(D.PEOPLE[0], focus=None, fn=None))}
     </div>
   </div>
 </section>"""
     render(c, c.t("Unternehmen", "Company"),
-           c.t("SDTT GmbH: über 20 Jahre Erfahrung mit öffentlichen Auftraggebern, über 90 fest angestellte Mitarbeitende, Methodik für Großprojekte.",
-               "SDTT GmbH: more than 20 years with public clients, over 90 permanent employees, a proven methodology for major projects."),
+           c.t("SDTT: langjährige Erfahrung mit öffentlichen Auftraggebern, qualifizierte Mitarbeitende, Methodik für Großprojekte.",
+               "SDTT: long-standing experience with public clients, qualified staff, a proven methodology for major projects."),
            body)
 
 
@@ -1227,14 +1214,14 @@ def ph(c, de, en=None):
     return f'<span class="placeholder">[{c.t("PLATZHALTER", "PLACEHOLDER")}: {c.t(de, en or de)}]</span>'
 
 
-def legal_page(c, title, desc, inner):
+def legal_page(c, title, desc, inner, draft=True):
     notice = c.t("Entwurf mit Platzhaltern – vor Veröffentlichung rechtlich prüfen lassen.",
                  "Draft with placeholders – to be reviewed by a lawyer before publication.")
     lang_note = "" if c.lang == "de" else '<p class="text-muted">This English version is provided for information only. The German version is legally binding.</p>'
     body = page_header(c, title, crumbs=[(title, None)]) + f"""
 <section class="section">
   <div class="container"><div class="prose">
-    <div class="notice">{notice}</div>
+    {f'<div class="notice">{notice}</div>' if draft else ""}
     {lang_note}
     {inner}
   </div></div>
@@ -1249,59 +1236,62 @@ def page_imprint(lang):
 <h2>{c.t("Angaben gemäß § 5 DDG", "Information pursuant to § 5 DDG (German Digital Services Act)")}</h2>
 <p>SDTT GmbH<br>{co["street"]}<br>{co["zip_city"]}<br>{co["country"][c.lang]}</p>
 <h2>{c.t("Vertreten durch", "Represented by")}</h2>
-<p>{c.t("Geschäftsführer", "Managing director")}: {ph(c, "Name", "name")}</p>
+<p>{c.t("Geschäftsführer", "Managing director")}: Shalva Papismedov</p>
 <h2>{c.t("Kontakt", "Contact")}</h2>
 <p>{c.t("Telefon", "Phone")}: {tel(co["phone"])}<br>{c.t("E-Mail", "Email")}: {mailto(co["email"])}</p>
-<h2>{c.t("Registereintrag", "Register entry")}</h2>
-<p>{c.t("Registergericht", "Register court")}: {c.t("Amtsgericht Stuttgart", "Local Court (Amtsgericht) Stuttgart")}<br>{c.t("Registernummer", "Register number")}: HRB {ph(c, "Nummer", "number")}</p>
-<h2>{c.t("Umsatzsteuer-ID", "VAT ID")}</h2>
-<p>{c.t("Umsatzsteuer-Identifikationsnummer gemäß § 27a UStG", "VAT identification number according to § 27a UStG")}: DE {ph(c, "Nummer", "number")}</p>
-<h2>{c.t("Handwerkskammer und Berufsrecht", "Chamber of Crafts and professional regulations")}</h2>
-<p>{c.t("Zuständige Kammer", "Competent chamber")}: Handwerkskammer Region Stuttgart, Heilbronner Straße 43, 70191 Stuttgart<br>
-{c.t("Eintragung in die Handwerksrolle", "Entry in the trade register")}: {c.t("Nr.", "No.")} {ph(c, "Nummer", "number")}<br>
-{c.t("Berufsbezeichnung", "Professional title")}: {ph(c, "z. B. Maurer- und Betonbauermeister", "e.g. master bricklayer and concrete builder")} ({c.t("verliehen in Deutschland", "awarded in Germany")})<br>
-{c.t("Berufsrechtliche Regelung", "Professional regulation")}: {c.t("Handwerksordnung (HwO)", "Crafts Code (Handwerksordnung, HwO)")}</p>
-<h2>{c.t("Berufshaftpflichtversicherung", "Professional liability insurance")}</h2>
-<p>{c.t("Versicherer", "Insurer")}: {ph(c, "Name und Anschrift", "name and address")}<br>{c.t("Geltungsbereich", "Territorial scope")}: {c.t("Deutschland", "Germany")}</p>
 <h2>{c.t("Verantwortlich für den Inhalt nach § 18 Abs. 2 MStV", "Responsible for content pursuant to § 18(2) MStV")}</h2>
-<p>{ph(c, "Name, Anschrift wie oben", "name, address as above")}</p>
+<p>Shalva Papismedov<br>{co["street"]}<br>{co["zip_city"]}</p>
 <h2>{c.t("Verbraucherstreitbeilegung", "Consumer dispute resolution")}</h2>
 <p>{c.t("Wir sind nicht bereit und nicht verpflichtet, an Streitbeilegungsverfahren vor einer Verbraucherschlichtungsstelle teilzunehmen.",
-        "We are neither willing nor obliged to take part in dispute resolution proceedings before a consumer arbitration board.")}</p>"""
+        "We are neither willing nor obliged to take part in dispute resolution proceedings before a consumer arbitration board.")}</p>
+<h2>{c.t("Haftung für Inhalte", "Liability for content")}</h2>
+<p>{c.t("Als Diensteanbieter sind wir gemäß § 7 Abs. 1 DDG für eigene Inhalte auf diesen Seiten nach den allgemeinen Gesetzen verantwortlich. Nach §§ 8 bis 10 DDG sind wir als Diensteanbieter jedoch nicht verpflichtet, übermittelte oder gespeicherte fremde Informationen zu überwachen oder nach Umständen zu forschen, die auf eine rechtswidrige Tätigkeit hinweisen. Verpflichtungen zur Entfernung oder Sperrung der Nutzung von Informationen nach den allgemeinen Gesetzen bleiben hiervon unberührt. Eine diesbezügliche Haftung ist jedoch erst ab dem Zeitpunkt der Kenntnis einer konkreten Rechtsverletzung möglich. Bei Bekanntwerden entsprechender Rechtsverletzungen werden wir diese Inhalte umgehend entfernen.",
+        "As a service provider we are responsible for our own content on these pages in accordance with general law (§ 7(1) DDG). Under §§ 8 to 10 DDG, however, we are not obliged to monitor transmitted or stored third-party information or to investigate circumstances that indicate unlawful activity. Obligations to remove or block the use of information under general law remain unaffected. Liability in this respect is only possible from the time we become aware of a specific infringement. If we become aware of such infringements, we will remove the content immediately.")}</p>
+<h2>{c.t("Haftung für Links", "Liability for links")}</h2>
+<p>{c.t("Unser Angebot enthält keine Links zu externen Websites Dritter, auf deren Inhalte wir einen Einfluss haben. Sollten wir künftig Links setzen, prüfen wir die verlinkten Seiten zum Zeitpunkt der Verlinkung auf erkennbare Rechtsverstöße und entfernen die Verlinkung, sobald uns Rechtsverletzungen bekannt werden.",
+        "Our website does not contain links to external third-party websites over whose content we have any influence. Should we add links in future, we will check the linked pages for recognisable legal violations at the time of linking and remove the link as soon as we become aware of any infringement.")}</p>
+<h2>{c.t("Urheberrecht", "Copyright")}</h2>
+<p>{c.t("Die durch die Seitenbetreiber erstellten Inhalte und Werke auf diesen Seiten unterliegen dem deutschen Urheberrecht. Vervielfältigung, Bearbeitung, Verbreitung und jede Art der Verwertung außerhalb der Grenzen des Urheberrechtes bedürfen der schriftlichen Zustimmung des jeweiligen Autors bzw. Erstellers.",
+        "The content and works created by the site operators on these pages are subject to German copyright law. Reproduction, editing, distribution and any kind of use beyond the limits of copyright law require the written consent of the respective author or creator.")}</p>"""
     legal_page(c, c.t("Impressum", "Imprint"),
-               c.t("Impressum der SDTT GmbH, Stuttgart.", "Imprint of SDTT GmbH, Stuttgart."), inner)
+               c.t("Impressum der SDTT GmbH, Düsseldorf.", "Imprint of SDTT GmbH, Düsseldorf."), inner, draft=False)
 
 
 def page_privacy(lang):
     c = Ctx(lang, "privacy")
     co = D.COMPANY
     inner = f"""
+<p>{c.t("Der Schutz Ihrer personenbezogenen Daten ist uns wichtig. Nachfolgend informieren wir Sie darüber, welche Daten beim Besuch dieser Website verarbeitet werden und welche Rechte Sie haben.",
+        "The protection of your personal data is important to us. Below we explain which data is processed when you visit this website and which rights you have.")}</p>
 <h2>{c.t("1. Verantwortlicher", "1. Controller")}</h2>
-<p>SDTT GmbH, {co["street"]}, {co["zip_city"]}<br>{c.t("E-Mail", "Email")}: {mailto(co["email"])} · {c.t("Telefon", "Phone")}: {tel(co["phone"])}</p>
-<p>{c.t("Datenschutzbeauftragte/r", "Data protection officer")}: {ph(c, "Name und Kontakt, falls bestellt", "name and contact, if appointed")}</p>
-<h2>{c.t("2. Bereitstellung der Website und Server-Logfiles", "2. Hosting and server log files")}</h2>
-<p>{c.t("Beim Aufruf der Website verarbeitet unser Hosting-Anbieter technisch notwendige Daten (IP-Adresse, Datum und Uhrzeit, aufgerufene Seite, Browsertyp) zur Auslieferung und Absicherung der Website. Rechtsgrundlage ist Art. 6 Abs. 1 lit. f DSGVO. Die Logfiles werden nach",
-        "When you visit the website, our hosting provider processes technically necessary data (IP address, date and time, requested page, browser type) to deliver and secure the website. The legal basis is Art. 6(1)(f) GDPR. Log files are deleted after")}
-   {ph(c, "Anzahl", "number")} {c.t("Tagen gelöscht.", "days.")}</p>
-<p>{c.t("Hosting-Anbieter", "Hosting provider")}: {ph(c, "Name und Anschrift", "name and address")}. {c.t("Mit dem Anbieter besteht ein Vertrag zur Auftragsverarbeitung nach Art. 28 DSGVO.", "A data processing agreement under Art. 28 GDPR is in place with the provider.")}</p>
+<p>SDTT GmbH<br>{co["street"]}<br>{co["zip_city"]}<br>{c.t("Geschäftsführer", "Managing director")}: Shalva Papismedov<br>
+{c.t("E-Mail", "Email")}: {mailto(co["email"])}<br>{c.t("Telefon", "Phone")}: {tel(co["phone"])}</p>
+<h2>{c.t("2. Hosting und Server-Logfiles", "2. Hosting and server log files")}</h2>
+<p>{c.t("Diese Website wird bei Vercel Inc., 440 N Barranca Ave #4133, Covina, CA 91723, USA, gehostet. Beim Aufruf der Website verarbeitet der Hosting-Anbieter technisch notwendige Daten (IP-Adresse, Datum und Uhrzeit des Abrufs, aufgerufene Seite, übertragene Datenmenge, Browsertyp und Betriebssystem), um die Website auszuliefern und ihre Sicherheit zu gewährleisten. Rechtsgrundlage ist Art. 6 Abs. 1 lit. f DSGVO (berechtigtes Interesse an einem sicheren und effizienten Betrieb der Website). Mit dem Anbieter besteht ein Vertrag zur Auftragsverarbeitung nach Art. 28 DSGVO. Die Übermittlung in die USA erfolgt auf Grundlage des EU-U.S. Data Privacy Framework bzw. der EU-Standardvertragsklauseln. Logfiles werden nur kurzzeitig gespeichert und anschließend gelöscht.",
+        "This website is hosted by Vercel Inc., 440 N Barranca Ave #4133, Covina, CA 91723, USA. When you visit the website, the hosting provider processes technically necessary data (IP address, date and time of the request, page requested, amount of data transferred, browser type and operating system) in order to deliver the website and ensure its security. The legal basis is Art. 6(1)(f) GDPR (legitimate interest in a secure and efficient operation of the website). A data processing agreement under Art. 28 GDPR is in place. Transfers to the USA are based on the EU-U.S. Data Privacy Framework or the EU standard contractual clauses. Log files are stored only for a short time and then deleted.")}</p>
 <h2>{c.t("3. Keine Cookies, kein Tracking", "3. No cookies, no tracking")}</h2>
-<p>{c.t("Diese Website setzt keine Cookies und verwendet keine Analyse- oder Tracking-Dienste. Schriftarten werden lokal von unserem Server geladen; es findet keine Verbindung zu Servern Dritter statt.",
-        "This website does not set cookies and does not use analytics or tracking services. Fonts are loaded locally from our server; no connection to third-party servers is made.")}</p>
-<h2>{c.t("4. Kontakt per E-Mail, Telefon oder WhatsApp", "4. Contact by email, phone or WhatsApp")}</h2>
-<p>{c.t("Wenn Sie uns kontaktieren, verarbeiten wir Ihre Angaben zur Bearbeitung der Anfrage. Rechtsgrundlage ist Art. 6 Abs. 1 lit. b DSGVO (vorvertragliche Maßnahmen) bzw. Art. 6 Abs. 1 lit. f DSGVO. Bei Nutzung von WhatsApp gelten zusätzlich die Datenschutzbestimmungen der WhatsApp Ireland Ltd.; dabei können Daten in Drittländer übermittelt werden.",
-        "If you contact us, we process your details to handle your enquiry. The legal basis is Art. 6(1)(b) GDPR (pre-contractual measures) or Art. 6(1)(f) GDPR. If you use WhatsApp, the privacy policy of WhatsApp Ireland Ltd. also applies, and data may be transferred to third countries.")}</p>
-<h2>{c.t("5. Speicherdauer", "5. Storage period")}</h2>
-<p>{c.t("Wir löschen personenbezogene Daten, sobald der Zweck entfällt und keine gesetzlichen Aufbewahrungspflichten (z. B. nach HGB oder AO) entgegenstehen.",
-        "We delete personal data as soon as the purpose no longer applies, unless statutory retention obligations (e.g. under the German Commercial Code or Fiscal Code) require otherwise.")}</p>
-<h2>{c.t("6. Ihre Rechte", "6. Your rights")}</h2>
-<p>{c.t("Sie haben das Recht auf Auskunft (Art. 15), Berichtigung (Art. 16), Löschung (Art. 17), Einschränkung der Verarbeitung (Art. 18), Datenübertragbarkeit (Art. 20) und Widerspruch (Art. 21 DSGVO).",
-        "You have the right of access (Art. 15), rectification (Art. 16), erasure (Art. 17), restriction of processing (Art. 18), data portability (Art. 20) and objection (Art. 21 GDPR).")}</p>
-<h2>{c.t("7. Beschwerderecht", "7. Right to lodge a complaint")}</h2>
-<p>{c.t("Sie können sich bei einer Datenschutz-Aufsichtsbehörde beschweren. Zuständig für uns ist der Landesbeauftragte für den Datenschutz und die Informationsfreiheit Baden-Württemberg.",
-        "You can lodge a complaint with a data protection supervisory authority. The authority responsible for us is the State Commissioner for Data Protection and Freedom of Information of Baden-Württemberg.")}</p>
-<p class="text-muted">{c.t("Stand", "Last updated")}: {ph(c, "Datum", "date")}</p>"""
+<p>{c.t("Diese Website setzt keine Cookies und verwendet keine Analyse-, Marketing- oder Tracking-Dienste. Schriftarten und alle weiteren Inhalte werden von unserem eigenen Server geladen; es findet keine Verbindung zu Servern anderer Anbieter statt. Lediglich Ihre Datenschutz-Auswahl wird als technisch notwendige Speicherung (Local Storage, Eintrag „sdtt-consent“) für sechs Monate in Ihrem Browser abgelegt (§ 25 Abs. 2 Nr. 2 TDDDG). Optionale Kategorien (Statistik, externe Inhalte) sind vorbereitet, aber derzeit nicht im Einsatz und bleiben ohne Ihre Einwilligung ausgeschaltet. Ihre Auswahl können Sie jederzeit über den Link „Cookie-Einstellungen“ im Seitenfuß ändern oder widerrufen.",
+        "This website does not set cookies and does not use analytics, marketing or tracking services. Fonts and all other content are loaded from our own server; no connection to other providers' servers is made. Only your privacy choice is stored in your browser as technically necessary storage (local storage, entry “sdtt-consent”) for six months (§ 25(2) no. 2 TDDDG). Optional categories (statistics, external content) are prepared but currently not in use and stay off without your consent. You can change or withdraw your choice at any time via the “Cookie settings” link in the footer.")}</p>
+<h2>{c.t("4. Kontaktaufnahme", "4. Contacting us")}</h2>
+<p>{c.t("Wenn Sie uns per E-Mail, Telefon oder WhatsApp kontaktieren, verarbeiten wir Ihre Angaben (z. B. Name, Kontaktdaten und Inhalt der Anfrage) ausschließlich zur Bearbeitung Ihrer Anfrage. Rechtsgrundlage ist Art. 6 Abs. 1 lit. b DSGVO, sofern die Anfrage mit einem Vertrag oder vorvertraglichen Maßnahmen zusammenhängt, andernfalls Art. 6 Abs. 1 lit. f DSGVO. Die Website enthält kein Kontaktformular. Der Link zu WhatsApp führt erst nach Ihrem Klick zu diesem Dienst; es gelten dann die Datenschutzbestimmungen der WhatsApp Ireland Ltd., bei der Daten auch in Drittländer übermittelt werden können.",
+        "If you contact us by email, phone or WhatsApp, we process your details (e.g. name, contact details and the content of your enquiry) solely to handle your enquiry. The legal basis is Art. 6(1)(b) GDPR if the enquiry relates to a contract or pre-contractual measures, otherwise Art. 6(1)(f) GDPR. The website has no contact form. The WhatsApp link only takes you to that service after you click it; the privacy policy of WhatsApp Ireland Ltd. then applies, and data may be transferred to third countries.")}</p>
+<h2>{c.t("5. Downloads", "5. Downloads")}</h2>
+<p>{c.t("Die angebotenen Dokumente (z. B. Projektarchiv, Zertifikate) können ohne Registrierung heruntergeladen werden. Dabei werden nur die unter Ziffer 2 genannten technischen Daten verarbeitet.",
+        "The documents offered (e.g. project archive, certificates) can be downloaded without registration. Only the technical data described in section 2 is processed.")}</p>
+<h2>{c.t("6. Speicherdauer", "6. Storage period")}</h2>
+<p>{c.t("Wir löschen personenbezogene Daten, sobald der Zweck der Verarbeitung entfällt und keine gesetzlichen Aufbewahrungspflichten (z. B. nach Handelsgesetzbuch oder Abgabenordnung) entgegenstehen.",
+        "We delete personal data as soon as the purpose of processing no longer applies, unless statutory retention obligations (e.g. under the German Commercial Code or Fiscal Code) require otherwise.")}</p>
+<h2>{c.t("7. Ihre Rechte", "7. Your rights")}</h2>
+<p>{c.t("Sie haben das Recht auf Auskunft (Art. 15 DSGVO), Berichtigung (Art. 16), Löschung (Art. 17), Einschränkung der Verarbeitung (Art. 18), Datenübertragbarkeit (Art. 20) und Widerspruch gegen die Verarbeitung auf Grundlage berechtigter Interessen (Art. 21). Zur Ausübung Ihrer Rechte genügt eine formlose Nachricht an die oben genannte Adresse.",
+        "You have the right of access (Art. 15 GDPR), rectification (Art. 16), erasure (Art. 17), restriction of processing (Art. 18), data portability (Art. 20) and to object to processing based on legitimate interests (Art. 21). To exercise your rights, an informal message to the address above is sufficient.")}</p>
+<h2>{c.t("8. Beschwerderecht", "8. Right to lodge a complaint")}</h2>
+<p>{c.t("Sie haben das Recht, sich bei einer Datenschutz-Aufsichtsbehörde zu beschweren. Zuständig für uns ist die Landesbeauftragte für Datenschutz und Informationsfreiheit Nordrhein-Westfalen, Kavalleriestraße 2–4, 40213 Düsseldorf.",
+        "You have the right to lodge a complaint with a data protection supervisory authority. The authority responsible for us is the State Commissioner for Data Protection and Freedom of Information of North Rhine-Westphalia (LDI NRW), Kavalleriestraße 2–4, 40213 Düsseldorf, Germany.")}</p>
+<h2>{c.t("9. Sicherheit", "9. Security")}</h2>
+<p>{c.t("Diese Website nutzt aus Sicherheitsgründen eine verschlüsselte Übertragung (TLS/HTTPS).", "For security reasons this website uses encrypted transmission (TLS/HTTPS).")}</p>
+<p class="text-muted">{c.t("Stand: Oktober 2026", "Last updated: October 2026")}</p>"""
     legal_page(c, c.t("Datenschutzerklärung", "Privacy policy"),
-               c.t("Datenschutzerklärung der SDTT GmbH nach DSGVO.", "Privacy policy of SDTT GmbH under the GDPR."), inner)
+               c.t("Datenschutzerklärung der SDTT GmbH nach DSGVO.", "Privacy policy of SDTT GmbH under the GDPR."), inner, draft=False)
 
 
 def page_terms(lang):
@@ -1330,15 +1320,18 @@ def page_terms(lang):
         (c.t("§ 8 Zahlung und Sicherheiten", "§ 8 Payment and security"),
          c.t("Zahlungen erfolgen nach § 16 VOB/B. Sicherheitsleistungen werden nach § 17 VOB/B durch Bürgschaft gestellt.",
              "Payments are made according to § 16 VOB/B. Security is provided by guarantee according to § 17 VOB/B.")),
-        (c.t("§ 9 Gerichtsstand", "§ 9 Place of jurisdiction"),
-         c.t("Gerichtsstand ist, soweit zulässig, Stuttgart. Es gilt deutsches Recht.",
-             "To the extent permitted, the place of jurisdiction is Stuttgart. German law applies.")),
+        (c.t("§ 9 Haftung", "§ 9 Liability"),
+         c.t("Die Haftung richtet sich nach den gesetzlichen Vorschriften und § 10 VOB/B. Für Schäden aus der Verletzung des Lebens, des Körpers oder der Gesundheit sowie bei Vorsatz und grober Fahrlässigkeit haften wir unbeschränkt. Eine Betriebs- und Bauleistungsversicherung besteht.",
+             "Liability follows the statutory provisions and § 10 VOB/B. We are liable without limitation for damage resulting from injury to life, body or health, and in cases of intent and gross negligence. Business liability and contractor's all-risk insurance are in place.")),
+        (c.t("§ 10 Gerichtsstand und Schlussbestimmungen", "§ 10 Place of jurisdiction and final provisions"),
+         c.t("Gerichtsstand ist, soweit zulässig, Düsseldorf. Es gilt deutsches Recht unter Ausschluss des UN-Kaufrechts. Sollte eine Bestimmung dieser Bedingungen unwirksam sein, bleibt die Wirksamkeit der übrigen Bestimmungen unberührt.",
+             "To the extent permitted, the place of jurisdiction is Düsseldorf. German law applies, excluding the UN Convention on Contracts for the International Sale of Goods. If any provision of these terms is invalid, the remaining provisions remain unaffected.")),
     ]
     inner = "".join(f"<h2>{a}</h2><p>{b}</p>" for a, b in sections)
-    inner += f'<p class="text-muted">{c.t("Stand", "Last updated")}: {ph(c, "Datum", "date")}</p>'
+    inner += f'<p class="text-muted">{c.t("Stand: Oktober 2026", "Last updated: October 2026")}</p>'
     legal_page(c, c.t("Allgemeine Geschäftsbedingungen", "General terms and conditions"),
                c.t("Allgemeine Geschäftsbedingungen der SDTT GmbH für öffentliche Auftraggeber.",
-                   "General terms and conditions of SDTT GmbH for public clients."), inner)
+                   "General terms and conditions of SDTT GmbH for public clients."), inner, draft=False)
 
 
 def page_404():
@@ -1470,38 +1463,10 @@ def make_pdf(lines):
 
 
 def build_pdfs():
-    co = D.COMPANY
+    import make_docs
     for lang in LANGS:
-        de = lang == "de"
         for d in D.DOCS:
-            lines = [
-                (20, d["title"][lang]),
-                (11, d["note"][lang]),
-                (10, ""),
-                (11, f"SDTT GmbH · {co['street']} · {co['zip_city']}"),
-                (10, ""),
-                (12, "PLATZHALTERDOKUMENT" if de else "PLACEHOLDER DOCUMENT"),
-                (11, "Wird vor Veröffentlichung durch das Originaldokument ersetzt." if de
-                     else "To be replaced with the original document before publication."),
-                (10, ""),
-            ]
-            if d["key"] == "archive":
-                lines.append((12, "Projektübersicht (Auszug)" if de else "Project overview (extract)"))
-                for p in D.PROJECTS:
-                    lines.append((9, f"{period(p)}  {p['title'][lang]}  –  {p['budget'][lang]}"))
-            write(f"downloads/{lang}/{d['file'][lang]}", make_pdf(lines), binary=True)
-    for p in D.PROJECTS:
-        lines = [
-            (18, "Referenzschreiben"),
-            (12, p["title"]["de"]),
-            (10, ""),
-            (11, f"Auftraggeber: {p['client']['de']}"),
-            (11, f"Zeitraum: {period(p)}  ·  Auftragsvolumen: {p['budget']['de']}"),
-            (10, ""),
-            (12, "PLATZHALTERDOKUMENT"),
-            (11, "Wird durch das unterzeichnete Referenzschreiben des Auftraggebers ersetzt."),
-        ]
-        write(ref_letter_path(p), make_pdf(lines), binary=True)
+            write(f"downloads/{lang}/{d['file'][lang]}", make_docs.build(d, lang, D, period), binary=True)
 
 
 # ---------------------------------------------------------------- sitemap / robots
