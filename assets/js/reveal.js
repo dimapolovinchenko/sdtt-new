@@ -24,7 +24,9 @@
   // Hero picture starts fully transparent (see CSS); it fades in from start().
   (function () {
     var m = document.querySelector(".hero-media");
-    if (m) { m.classList.add("rv-fade"); m.style.setProperty("--dur", "2s"); }
+    // Phones show the photo straight away (no slow fade-in).
+    var phone = window.matchMedia && window.matchMedia("(max-width: 47.99rem)").matches;
+    if (m && !phone) { m.classList.add("rv-fade"); m.style.setProperty("--dur", "2s"); }
   })();
 
   /* Whole-block reveal: fade + slide up. `hero` blocks run on load with fixed delays. */

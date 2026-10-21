@@ -250,7 +250,14 @@ svg.icon { display: inline-block; width: 1.25em; height: 1.25em; flex: none; ver
   content: ""; position: absolute; inset: 0; pointer-events: none;
   background: linear-gradient(to right, rgba(236, 237, 240, 0.94) 0%, rgba(236, 237, 240, 0.86) 45%, rgba(236, 237, 240, 0.5) 75%, rgba(236, 237, 240, 0.2) 100%);
 }
-@media (max-width: 47.99rem) { .hero-media::after { background: rgba(236, 237, 240, 0.84); } }
+/* Phones: the photo is shown clearly (no light veil), only slightly darkened, with white text on top */
+@media (max-width: 47.99rem) {
+  .hero-media::after { background: linear-gradient(to bottom, rgba(8, 20, 36, 0.58) 0%, rgba(8, 20, 36, 0.42) 100%); }
+  .hero .hero-copy h1, .hero .hero-copy .lead { color: #fff; text-shadow: 0 1px 14px rgba(0, 0, 0, 0.35); }
+}
+.hero-media picture { display: contents; }
+.hero-media video { display: none; }
+@media (min-width: 48rem) { .hero-media video { display: block; } }
 @media (min-width: 80rem) { .hero-media::after { display: none; } }
 .hero-inner { position: relative; z-index: 1; width: 100%; padding-block: var(--space-7); } /* only top/bottom, the side gutters come from .container */
 .hero-grid { display: grid; }

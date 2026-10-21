@@ -21,10 +21,10 @@
 <link rel="preload" href="assets/fonts/hanken-grotesk-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="assets/fonts/public-sans-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="assets/css/tokens.css?v=f637ec6d">
-<link rel="stylesheet" href="assets/css/main.css?v=e2e08a4a">
+<link rel="stylesheet" href="assets/css/main.css?v=cfa15b4d">
 <script>document.documentElement.className = "js"; setTimeout(function () { if (!window.__rv) document.documentElement.classList.add("rv-fail"); }, 4000);</script>
 <script src="assets/js/main.js?v=d6a9d473" defer></script>
-<script src="assets/js/hero-scrub.js?v=21510d91" defer></script>
+<script src="assets/js/hero-scrub.js?v=8ca02d25" defer></script>
 <script src="assets/js/ba-slider.js?v=754b84a7" defer></script>
 <script src="assets/js/slider.js?v=8216ae09" defer></script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"GeneralContractor","name":"SDTT GmbH","logo":"https://www.sdtt.de/assets/img/logo/SDTT_Logo_Haupt_Marineblau.svg","url":"https://www.sdtt.de/","email":"info@sdtt.de","telephone":"+4917674906009","address":{"@type":"PostalAddress","streetAddress":"Eichendorffstraße 3","postalCode":"40474","addressLocality":"Düsseldorf","addressRegion":"Nordrhein-Westfalen","addressCountry":"DE"},"areaServed":"Baden-Württemberg"}</script>
@@ -71,7 +71,10 @@
 <div class="hero-track">
 <section class="hero" aria-labelledby="hero-title">
   <div class="hero-media" aria-hidden="true">
-    <img class="hero-poster" src="assets/video/hero-poster.jpg" width="1920" height="1080" fetchpriority="high" decoding="async" alt="">
+    <picture>
+      <source media="(max-width: 47.99rem)" srcset="assets/video/hero-mobile.jpg">
+      <img class="hero-poster" src="assets/video/hero-poster.jpg" width="1920" height="1080" fetchpriority="high" decoding="async" alt="">
+    </picture>
     <video class="hero-video" muted playsinline preload="none" tabindex="-1" width="1280" height="720"
            data-src="assets/video/hero-scrub.mp4" data-src-small="assets/video/hero-scrub-sm.mp4"></video>
   </div>
@@ -81,7 +84,7 @@
         <h1 id="hero-title">Zuverlässiger Partner für öffentliche und kommunale Bauprojekte</h1>
         <p class="lead">Langjährige Erfahrung. Zahlreiche abgeschlossene Projekte. Unterschiedliche Größenordnungen. VOB/DIN-konform.</p>
         <div class="btn-row">
-          <a class="btn btn--primary btn--lg" href="downloads/de/projektarchiv.pdf" download><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg>Projektarchiv herunterladen (PDF)</a>
+          <a class="btn btn--primary btn--lg" href="#portfolio">Referenzen ansehen<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 5v14"/><path d="m19 12-7 7-7-7"/></svg></a>
         </div>
       </div>
     </div>
@@ -133,7 +136,7 @@
   </div>
 </section>
 
-<section class="section section--grey" aria-labelledby="portfolio-title">
+<section class="section section--grey" id="portfolio" aria-labelledby="portfolio-title">
   <div class="container">
     <div class="section-head"><h2 id="portfolio-title">Referenzen: öffentliche Bauprojekte</h2><p>Ausschließlich öffentliche Auftraggeber. Zu jedem Projekt: Zeitraum, Auftragsvolumen, Auftraggeber und Leistungsumfang. Referenzschreiben finden Sie auf den Projektseiten.</p></div>
     <article class="featured-project">
@@ -337,7 +340,7 @@
 </footer>
 <script src="assets/js/lenis.min.js?v=4443fff6"></script>
 <script src="assets/js/smooth-scroll.js?v=e3c1d21c"></script>
-<script src="assets/js/reveal.js?v=6fb3fddb"></script>
+<script src="assets/js/reveal.js?v=f06b874f"></script>
 <script src="assets/js/consent.js?v=958b491f"></script>
 </body>
 </html>

@@ -118,6 +118,7 @@ ICONS = {
     "chat": '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>',
     "chevron-down": '<path d="m6 9 6 6 6-6"/>',
     "arrow-right": '<path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>',
+    "arrow-down": '<path d="M12 5v14"/><path d="m19 12-7 7-7-7"/>',
     "arrow-left": '<path d="M19 12H5"/><path d="m12 19-7-7 7-7"/>',
     "menu": '<path d="M4 6h16"/><path d="M4 12h16"/><path d="M4 18h16"/>',
     "close": '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
@@ -727,7 +728,10 @@ def page_home(lang):
 <div class="hero-track">
 <section class="hero" aria-labelledby="hero-title">
   <div class="hero-media" aria-hidden="true">
-    <img class="hero-poster" src="{c.asset('assets/video/hero-poster.jpg')}" width="1920" height="1080" fetchpriority="high" decoding="async" alt="">
+    <picture>
+      <source media="(max-width: 47.99rem)" srcset="{c.asset('assets/video/hero-mobile.jpg')}">
+      <img class="hero-poster" src="{c.asset('assets/video/hero-poster.jpg')}" width="1920" height="1080" fetchpriority="high" decoding="async" alt="">
+    </picture>
     <video class="hero-video" muted playsinline preload="none" tabindex="-1" width="1280" height="720"
            data-src="{c.asset('assets/video/hero-scrub.mp4')}" data-src-small="{c.asset('assets/video/hero-scrub-sm.mp4')}"></video>
   </div>
@@ -738,7 +742,7 @@ def page_home(lang):
         <p class="lead">{c.t("Langjährige Erfahrung. Zahlreiche abgeschlossene Projekte. Unterschiedliche Größenordnungen. VOB/DIN-konform.",
                              "Long-standing experience. Numerous completed projects. Every scale. VOB/DIN compliant.")}</p>
         <div class="btn-row">
-          <a class="btn btn--primary btn--lg" href="{c.doc('archive')}" download>{icon("download")}{c.t("Projektarchiv herunterladen (PDF)", "Download project archive (PDF)")}</a>
+          <a class="btn btn--primary btn--lg" href="#portfolio">{c.t("Referenzen ansehen", "View our references")}{icon("arrow-down")}</a>
         </div>
       </div>
     </div>
@@ -756,7 +760,7 @@ def page_home(lang):
   </div>
 </section>
 
-<section class="section section--grey" aria-labelledby="portfolio-title">
+<section class="section section--grey" id="portfolio" aria-labelledby="portfolio-title">
   <div class="container">
     {section_head(c.t("Referenzen: öffentliche Bauprojekte", "References: public construction projects"),
                   c.t("Ausschließlich öffentliche Auftraggeber. Zu jedem Projekt: Zeitraum, Auftragsvolumen, Auftraggeber und Leistungsumfang. Referenzschreiben finden Sie auf den Projektseiten.",

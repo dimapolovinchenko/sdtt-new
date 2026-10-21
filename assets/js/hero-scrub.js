@@ -16,6 +16,7 @@
 
   var pinMq = window.matchMedia("(min-width: 0px)"); // hero = window height at every screen size
   var smallMq = window.matchMedia("(max-width: 40em)");
+  var phoneMq = window.matchMedia("(max-width: 47.99rem)"); // phones get a still photo instead of the video
 
   var copy = track.querySelector(".hero-copy");
   // The scroll distance equals the 6 s clip. The text starts to dissolve at 1 s and is gone at 4 s.
@@ -61,7 +62,7 @@
   /* While the hero is pinned, the text dissolves (opacity 100 → 0) and drifts to the left. */
   function applyText(p) {
     if (!copy) return;
-    if (!pinMq.matches || p <= 0.0001) {
+    if (!pinMq.matches || phoneMq.matches || p <= 0.0001) {
       copy.style.opacity = "";
       copy.style.transform = "";
       copy.style.visibility = "";
@@ -116,15 +117,22 @@
     });
   }
 
+  var started = false;
+  function startVideo() {
+    if (started) return;
+    started = true;
+    video.src = (smallMq.matches ? video.getAttribute("data-src-small") : video.getAttribute("data-src"));
+    video.preload = "auto";
+    video.muted = true;
+    if (video.readyState >= 1) init(); else video.addEventListener("loadedmetadata", init);
+  }
+
   measure();
-  video.src = (smallMq.matches ? video.getAttribute("data-src-small") : video.getAttribute("data-src"));
-  video.preload = "auto";
-  video.muted = true;
-  if (video.readyState >= 1) init(); else video.addEventListener("loadedmetadata", init);
+  if (!phoneMq.matches) startVideo();   // on phones the still photo stays; no video is downloaded
 
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitCopy);
   window.addEventListener("load", fitCopy);
   window.addEventListener("scroll", onScroll, { passive: true });
-  window.addEventListener("resize", function () { measure(); onScroll(); });
+  window.addEventListener("resize", function () { measure(); if (!phoneMq.matches) startVideo(); onScroll(); });
   if (pinMq.addEventListener) pinMq.addEventListener("change", function () { measure(); onScroll(); });
 })();
